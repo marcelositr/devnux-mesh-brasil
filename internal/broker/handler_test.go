@@ -44,7 +44,9 @@ func testEnvelope(t *testing.T, data *meshtastic.Data) *meshtastic.ServiceEnvelo
 		Packet: &meshtastic.MeshPacket{
 			Id:        packetID,
 			From:      from,
-			Encrypted: encrypted,
+			PayloadVariant: &meshtastic.MeshPacket_Encrypted{
+				Encrypted: encrypted,
+			},
 		},
 	}
 }
@@ -56,7 +58,9 @@ func TestValidateServiceEnvelope(t *testing.T) {
 		Packet: &meshtastic.MeshPacket{
 			Id:        1,
 			From:      2,
-			Encrypted: []byte{1},
+			PayloadVariant: &meshtastic.MeshPacket_Encrypted{
+				Encrypted: []byte{1},
+			},
 		},
 	}
 
@@ -84,7 +88,9 @@ func TestValidateServiceEnvelope(t *testing.T) {
 			GatewayId: "gateway",
 			Packet: &meshtastic.MeshPacket{
 				From:      2,
-				Encrypted: []byte{1},
+				PayloadVariant: &meshtastic.MeshPacket_Encrypted{
+					Encrypted: []byte{1},
+				},
 			},
 		}, wantErr: true},
 		{name: "invalid source", envelope: &meshtastic.ServiceEnvelope{
@@ -92,7 +98,9 @@ func TestValidateServiceEnvelope(t *testing.T) {
 			GatewayId: "gateway",
 			Packet: &meshtastic.MeshPacket{
 				Id:        1,
-				Encrypted: []byte{1},
+				PayloadVariant: &meshtastic.MeshPacket_Encrypted{
+					Encrypted: []byte{1},
+				},
 			},
 		}, wantErr: true},
 		{name: "missing encrypted payload", envelope: &meshtastic.ServiceEnvelope{
@@ -109,8 +117,12 @@ func TestValidateServiceEnvelope(t *testing.T) {
 			Packet: &meshtastic.MeshPacket{
 				Id:        1,
 				From:      2,
-				Encrypted: []byte{1},
-				Decoded:   &meshtastic.Data{Payload: []byte("decoded")},
+				PayloadVariant: &meshtastic.MeshPacket_Encrypted{
+					Encrypted: []byte{1},
+				},
+				PayloadVariant: &meshtastic.MeshPacket_Decoded{
+					Decoded: &meshtastic.Data{Payload: []byte("decoded")},
+				},
 			},
 		}, wantErr: true},
 	}
@@ -150,7 +162,9 @@ func TestDecryptMeshPacketReturnsErrorForInvalidCiphertext(t *testing.T) {
 		Packet: &meshtastic.MeshPacket{
 			Id:        1,
 			From:      2,
-			Encrypted: []byte{1, 2, 3, 4},
+			PayloadVariant: &meshtastic.MeshPacket_Encrypted{
+				Encrypted: []byte{1,
+			}, 2, 3, 4},
 		},
 	}
 
@@ -246,7 +260,9 @@ func TestOnPublishBlocksEnvelopeWhenDecryptionCannotDecodeData(t *testing.T) {
 		Packet: &meshtastic.MeshPacket{
 			Id:        1,
 			From:      2,
-			Encrypted: []byte{1, 2, 3, 4},
+			PayloadVariant: &meshtastic.MeshPacket_Encrypted{
+				Encrypted: []byte{1,
+			}, 2, 3, 4},
 		},
 	}
 	payload, err := proto.Marshal(envelope)
