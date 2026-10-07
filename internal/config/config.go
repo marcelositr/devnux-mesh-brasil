@@ -4,8 +4,11 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+
+	"github.com/marcelositr/devnux-mesh-brasil/internal/crypto"
 )
 
+// Config reúne as configurações usadas para iniciar o broker.
 type Config struct {
 	ListenAddress   string
 	CertificateFile string
@@ -13,12 +16,13 @@ type Config struct {
 	DefaultPSK      []byte
 }
 
+// Load carrega as configurações do ambiente e aplica os valores padrão.
 func Load() (Config, error) {
 	cfg := Config{
 		ListenAddress:   envOrDefault("MQTT_LISTEN_ADDRESS", ":8883"),
 		CertificateFile: envOrDefault("MQTT_CERTIFICATE_FILE", "certificate.pem"),
 		PrivateKeyFile:  envOrDefault("MQTT_PRIVATE_KEY_FILE", "private.key"),
-		DefaultPSK:      defaultPSK(),
+		DefaultPSK:      append([]byte(nil), crypto.DefaultPSK...),
 	}
 
 	if value := os.Getenv("MESHTASTIC_DEFAULT_PSK"); value != "" {
@@ -32,15 +36,7 @@ func Load() (Config, error) {
 	return cfg, nil
 }
 
-func defaultPSK() []byte {
-	return []byte{
-		0xd4, 0xf1, 0xbb, 0x3a,
-		0x20, 0x29, 0x07, 0x59,
-		0xf0, 0xbc, 0xff, 0xab,
-		0xcf, 0x4e, 0x69, 0x01,
-	}
-}
-
+// parsePSK converte a PSK hexadecimal e valida os tamanhos aceitos pelo AES.
 func parsePSK(value string) ([]byte, error) {
 	psk, err := hex.DecodeString(value)
 	if err != nil {
@@ -55,6 +51,7 @@ func parsePSK(value string) ([]byte, error) {
 	}
 }
 
+// envOrDefault retorna o valor da variável de ambiente ou o fallback quando ela não está definida.
 func envOrDefault(name, fallback string) string {
 	if value := os.Getenv(name); value != "" {
 		return value
