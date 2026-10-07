@@ -74,8 +74,8 @@ func (h *Handler) OnPublish(client *mqtt.Client, packet packets.Packet) (packets
 
 	data, err := h.decryptMeshPacket(&envelope)
 	if err != nil {
-		// No projeto de referência o bloqueio por falha de descriptografia está comentado.
-		h.logger.Debug("não foi possível interpretar o pacote criptografado", "erro", err)
+		h.logger.Warn("não foi possível interpretar o pacote criptografado", "topic", packet.TopicName, "client_id", client.ID, "erro", err)
+		return packet, packets.CodeSuccessIgnore
 	}
 
 	h.logReceivedMessage(packet.TopicName, client.ID, data)
@@ -128,7 +128,7 @@ func (h *Handler) decryptMeshPacket(envelope *meshtastic.ServiceEnvelope) (*mesh
 	}
 
 	if int32(data.GetPortnum()) <= 0 || len(data.GetPayload()) == 0 {
-		return nil, errors.New("payload Meshtastic inválido")
+		return nil, nil
 	}
 
 	return &data, nil

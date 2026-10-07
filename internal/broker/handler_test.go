@@ -142,7 +142,7 @@ func TestDecryptMeshPacket(t *testing.T) {
 	}
 }
 
-func TestDecryptMeshPacketRejectsInvalidCiphertext(t *testing.T) {
+func TestDecryptMeshPacketReturnsErrorForInvalidCiphertext(t *testing.T) {
 	handler := testHandler()
 	envelope := &meshtastic.ServiceEnvelope{
 		ChannelId: "channel",
@@ -163,16 +163,16 @@ func TestDecryptMeshPacketRejectsInvalidCiphertext(t *testing.T) {
 	}
 }
 
-func TestDecryptMeshPacketRejectsInvalidData(t *testing.T) {
+func TestDecryptMeshPacketReturnsNilForUnknownData(t *testing.T) {
 	handler := testHandler()
-	envelope := testEnvelope(t, &meshtastic.Data{})
+	envelope := testEnvelope(t, &meshtastic.Data{Portnum: 0, Payload: []byte("unknown")})
 
 	got, err := handler.decryptMeshPacket(envelope)
-	if err == nil {
-		t.Fatal("decryptMeshPacket() deveria rejeitar Data sem portnum/payload")
+	if err != nil {
+		t.Fatalf("decryptMeshPacket() deveria aceitar Data não reconhecido: %v", err)
 	}
 	if got != nil {
-		t.Fatalf("decryptMeshPacket() retornou dados inesperados: %v", got)
+		t.Fatalf("decryptMeshPacket() deveria retornar nil para Data não reconhecido: %v", got)
 	}
 }
 
@@ -236,7 +236,7 @@ func TestOnPublishAcceptsValidEnvelope(t *testing.T) {
 	}
 }
 
-func TestOnPublishAcceptsValidEnvelopeWhenDecryptionFails(t *testing.T) {
+func TestOnPublishBlocksEnvelopeWhenDecryptionCannotDecodeData(t *testing.T) {
 	handler := testHandler()
 	client := &mqtt.Client{ID: "test-client"}
 
@@ -259,8 +259,8 @@ func TestOnPublishAcceptsValidEnvelopeWhenDecryptionFails(t *testing.T) {
 		Payload:   payload,
 	})
 
-	if err != nil {
-		t.Fatalf("OnPublish() deveria aceitar o envelope mesmo com falha de descriptografia: %v", err)
+	if err != packets.CodeSuccessIgnore {
+		t.Fatalf("OnPublish() deveria bloquear falha de parsing do Data: got %v", err)
 	}
 	if !bytes.Equal(got.Payload, payload) {
 		t.Fatalf("OnPublish() alterou payload")
