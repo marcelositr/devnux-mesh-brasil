@@ -124,7 +124,9 @@ A configuração atual aceita conexões e inscrições MQTT sem autenticação a
 
 Isso é uma característica do escopo atual, não uma indicação de que o broker deva ser exposto sem proteção em produção.
 
-Antes de uma implantação pública, devem ser definidos requisitos de autenticação, autorização, controle de abuso e observabilidade.
+Antes de uma implantação pública, os requisitos de autenticação, autorização, controle de abuso e observabilidade deverão ser definidos com base no comportamento observado em hardware Meshtastic físico e real.
+
+Não implemente essas camadas apenas com base em hipóteses. As possibilidades e os critérios de decisão estão em [Evolução futura e hardening](evolucao.md).
 
 ## Verificação
 
