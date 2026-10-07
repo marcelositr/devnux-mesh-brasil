@@ -63,12 +63,9 @@ func TestTransformPacketRejectsUnsupportedKeySize(t *testing.T) {
 	}
 }
 
-func TestTransformPacketMatchesMeshtasticCSharpVector(t *testing.T) {
-	// Vetor retirado de Meshtastic/c-sharp:
-	// Meshtastic.Test/Crypto/PacketCryptoTests.cs
-	// packet.From = 4202784164
-	// packet.Id = 1777428186
-	// O ciphertext foi gerado pela implementação C# usando Resources.DEFAULT_PSK.
+func TestTransformPacketMatchesInteroperabilityVector(t *testing.T) {
+	// O vetor valida a interoperabilidade da cifra com uma implementação C#.
+	// Os valores de origem e identificador correspondem ao pacote usado na validação.
 	nonce := NewNonce(4202784164, 1777428186)
 
 	ciphertext, err := base64.StdEncoding.DecodeString("kiDV39nDDsi8AON+Czei6zUpy+F/7E+lyIpicxJR40KXBFmPkqFUEnobI5voQadha+s=")
@@ -83,10 +80,10 @@ func TestTransformPacketMatchesMeshtasticCSharpVector(t *testing.T) {
 
 	decrypted, err := TransformPacket(ciphertext, nonce, DefaultPSK)
 	if err != nil {
-		t.Fatalf("erro ao descriptografar vetor C#: %v", err)
+		t.Fatalf("erro ao descriptografar vetor de interoperabilidade: %v", err)
 	}
 
 	if !bytes.Equal(decrypted, expected) {
-		t.Fatalf("vetor C# incompatível: %x != %x", decrypted, expected)
+		t.Fatalf("vetor de interoperabilidade incompatível: %x != %x", decrypted, expected)
 	}
 }
