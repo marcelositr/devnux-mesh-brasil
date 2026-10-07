@@ -112,4 +112,4 @@ Antes de uma implantação pública, devem ser definidos requisitos de autentica
 
 ## Verificação
 
-Após alterações de configuração ou infraestrutura, execute a bateria completa descrita em [Guia de desenvolvimento](desenvolvimento.md).
+Após alterações de configuração ou infraestrutura, execute a bateria completa descrita em [Guia de desenvolvimento](desenvolvimento.md). Os resultados da validação funcional e Docker estão registrados em [Validação](validacao.md).
