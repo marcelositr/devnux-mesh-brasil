@@ -117,9 +117,6 @@ func TestValidateServiceEnvelope(t *testing.T) {
 			Packet: &meshtastic.MeshPacket{
 				Id:        1,
 				From:      2,
-				PayloadVariant: &meshtastic.MeshPacket_Encrypted{
-					Encrypted: []byte{1},
-				},
 				PayloadVariant: &meshtastic.MeshPacket_Decoded{
 					Decoded: &meshtastic.Data{Payload: []byte("decoded")},
 				},
@@ -163,8 +160,8 @@ func TestDecryptMeshPacketReturnsErrorForInvalidCiphertext(t *testing.T) {
 			Id:        1,
 			From:      2,
 			PayloadVariant: &meshtastic.MeshPacket_Encrypted{
-				Encrypted: []byte{1,
-			}, 2, 3, 4},
+				Encrypted: []byte{1, 2, 3, 4},
+			},
 		},
 	}
 
