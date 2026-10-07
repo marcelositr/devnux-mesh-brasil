@@ -1,66 +1,65 @@
 # DevNux Mesh Brasil
 
-Infraestrutura MQTT para integração e comunicação entre redes Meshtastic no Brasil.
+Broker MQTT para integração de redes Meshtastic.
 
-## Status
+O **DevNux Mesh Brasil** é um projeto de infraestrutura de código aberto voltado ao recebimento e processamento de mensagens Meshtastic por MQTT. O projeto implementa o transporte MQTT sobre TLS, valida envelopes protobuf, descriptografa pacotes Meshtastic e registra os dados processados.
 
-**Em desenvolvimento e testes.**
+## Estado atual
 
-## Escopo atual
+O projeto está em desenvolvimento e validação técnica. O núcleo atual está coberto por testes automatizados e foi validado com `go test`, `go vet` e compilação do broker.
 
-- Broker MQTT.
-- Endpoint MQTT sobre TLS na porta 8883.
-- TLS 1.2 como protocolo mínimo.
-- Aceitação de conexões MQTT.
-- Aceitação de inscrições MQTT.
-- Recepção de `ServiceEnvelope` em protobuf.
-- Validação dos campos essenciais do envelope.
-- Descriptografia AES-CTR de pacotes Meshtastic.
-- Decodificação do payload como `Data`.
-- Registro de mensagens de texto e outros portnums.
-- Encerramento controlado por SIGINT/SIGTERM.
+O escopo atual é deliberadamente pequeno: o objetivo é manter um broker funcional, compreensível e fácil de evoluir sem introduzir abstrações desnecessárias.
+
+## O que o broker faz
+
+- inicia um broker MQTT sobre TLS;
+- aceita conexões e inscrições MQTT;
+- recebe `ServiceEnvelope` codificados em protobuf;
+- valida os campos necessários para o processamento;
+- descriptografa pacotes Meshtastic com AES-CTR;
+- interpreta o conteúdo descriptografado como `Data`;
+- registra mensagens de texto e outros portnums reconhecidos pelo fluxo atual;
+- encerra o processo de forma controlada por SIGINT ou SIGTERM.
+
+A arquitetura e o fluxo interno estão descritos em [Arquitetura](docs/arquitetura.md).
 
 ## Configuração
 
-Por padrão:
+Valores padrão:
 
-- endereço MQTT: `:8883`
-- certificado: `certificate.pem`
-- chave privada: `private.key`
-- PSK padrão Meshtastic: `d4f1bb3a20290759f0bcffabcf4e6901` (16 bytes)
+| Configuração | Padrão |
+|---|---|
+| Endereço MQTT | `:8883` |
+| Certificado TLS | `certificate.pem` |
+| Chave privada TLS | `private.key` |
+| PSK padrão | `d4f1bb3a20290759f0bcffabcf4e6901` |
 
-As configurações podem ser alteradas por variáveis de ambiente:
+Variáveis de ambiente:
 
 - `MQTT_LISTEN_ADDRESS`
 - `MQTT_CERTIFICATE_FILE`
 - `MQTT_PRIVATE_KEY_FILE`
 - `MESHTASTIC_DEFAULT_PSK`
 
-A PSK configurada por ambiente deve ser hexadecimal e possuir 16 ou 32 bytes após a decodificação.
+A PSK fornecida por ambiente deve ser hexadecimal e resultar em 16 ou 32 bytes.
 
-Nunca coloque uma chave privada real no repositório.
+Os detalhes estão em [Configuração e execução](docs/configuracao.md).
 
 ## TLS
 
-O broker utiliza certificado e chave privada em arquivos separados. O listener aceita somente TLS 1.2 ou superior.
+O listener utiliza TLS 1.2 como versão mínima e recebe certificado e chave privada de arquivos separados.
 
-Exemplo:
+A configuração de TLS, os requisitos de execução e os cuidados operacionais estão documentados em [Configuração e execução](docs/configuracao.md).
 
-```bash
-MQTT_CERTIFICATE_FILE=certificate.pem \
-MQTT_PRIVATE_KEY_FILE=private.key \
-./broker
-```
+## Protocolo e criptografia
 
-## Testes locais
+O processamento utiliza os tipos protobuf do ecossistema Meshtastic e AES-CTR para a descriptografia dos pacotes.
 
-Dependências:
+As regras de validação, construção do nonce, uso da PSK e comportamento do processamento estão em [Protocolo e criptografia](docs/protocolo.md).
 
-- Go instalado.
-- Um certificado TLS para teste.
-- Cliente MQTT para teste.
+## Desenvolvimento
 
-Comandos:
+Para trabalhar no projeto:
 
 ```bash
 go test ./...
@@ -68,30 +67,38 @@ go vet ./...
 go build ./cmd/broker
 ```
 
-## Comportamento do broker
+As responsabilidades dos pacotes, fluxo de execução e critérios para alterações estão em [Guia de desenvolvimento](docs/desenvolvimento.md).
 
-Conexões e inscrições MQTT são aceitas sem autenticação ou filtragem adicional nesta etapa.
+## Uso de IA
 
-Publicações são interpretadas como `ServiceEnvelope`. Payloads vazios, protobufs inválidos, envelopes inválidos e pacotes que não possam ser descriptografados ou interpretados são ignorados pelo fluxo de publicação.
+Ferramentas de IA podem ser utilizadas como apoio ao desenvolvimento, revisão, investigação e documentação. Elas não substituem a responsabilidade humana pelas decisões do projeto, pela validação do código ou pela verificação de resultados.
 
-O nome do tópico não possui filtragem específica nesta etapa. Ele é utilizado para registro das mensagens.
+As regras adotadas pelo projeto estão em [Uso de IA](docs/uso-de-ia.md).
 
-A descriptografia utiliza a PSK padrão configurada para o broker. Não há seleção de PSK por `channel_id`.
+## Limites atuais
 
-## Documentação técnica
+Ainda não fazem parte do núcleo atual:
 
-Os detalhes do protocolo processado, validações, criptografia e decisões de implementação estão em:
-
-`docs/reproducao-meshtastic-mqtt.md`
-
-## Fora do escopo atual
-
-Não fazem parte da implementação atual:
-
-- rate limiting;
-- deduplicação de pacotes;
-- persistência;
+- autenticação MQTT;
 - ACL ou autorização por tópico;
-- filtragem de portnums;
+- rate limiting;
+- deduplicação;
+- persistência;
+- seleção de PSK por `channel_id`;
+- filtragem avançada de portnums;
 - observabilidade avançada;
 - mecanismos de banimento ou moderação.
+
+Esses limites são intencionais nesta etapa e não devem ser confundidos com funcionalidades já implementadas.
+
+## Documentação
+
+A documentação foi separada por responsabilidade para evitar duplicação:
+
+- [Arquitetura](docs/arquitetura.md) — organização interna e fluxo do broker.
+- [Protocolo e criptografia](docs/protocolo.md) — envelope, validação, nonce, AES-CTR e PSK.
+- [Configuração e execução](docs/configuracao.md) — ambiente, TLS, execução e testes.
+- [Guia de desenvolvimento](docs/desenvolvimento.md) — manutenção, mudanças e validação.
+- [Uso de IA](docs/uso-de-ia.md) — regras para uso responsável de ferramentas de IA no desenvolvimento.
+
+Cada documento trata apenas do seu próprio assunto e aponta para os demais quando necessário.
