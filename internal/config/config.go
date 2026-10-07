@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/hex"
 	"fmt"
 	"os"
 )
@@ -21,11 +22,11 @@ func Load() (Config, error) {
 	}
 
 	if value := os.Getenv("MESHTASTIC_DEFAULT_PSK"); value != "" {
-		cfg.DefaultPSK = []byte(value)
-	}
-
-	if len(cfg.DefaultPSK) == 0 {
-		return Config{}, fmt.Errorf("MESHTASTIC_DEFAULT_PSK não pode ser vazio")
+		psk, err := parsePSK(value)
+		if err != nil {
+			return Config{}, fmt.Errorf("MESHTASTIC_DEFAULT_PSK inválida: %w", err)
+		}
+		cfg.DefaultPSK = psk
 	}
 
 	return cfg, nil
@@ -37,6 +38,20 @@ func defaultPSK() []byte {
 		0x20, 0x29, 0x07, 0x59,
 		0xf0, 0xbc, 0xff, 0xab,
 		0xcf, 0x4e, 0x69, 0x01,
+	}
+}
+
+func parsePSK(value string) ([]byte, error) {
+	psk, err := hex.DecodeString(value)
+	if err != nil {
+		return nil, fmt.Errorf("esperado hexadecimal: %w", err)
+	}
+
+	switch len(psk) {
+	case 16, 32:
+		return psk, nil
+	default:
+		return nil, fmt.Errorf("tamanho inválido: esperado 16 ou 32 bytes, recebido %d", len(psk))
 	}
 }
 
