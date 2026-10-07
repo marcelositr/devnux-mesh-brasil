@@ -258,8 +258,8 @@ func TestOnPublishBlocksEnvelopeWhenDecryptionCannotDecodeData(t *testing.T) {
 			Id:        1,
 			From:      2,
 			PayloadVariant: &meshtastic.MeshPacket_Encrypted{
-				Encrypted: []byte{1,
-			}, 2, 3, 4},
+				Encrypted: []byte{1, 2, 3, 4},
+			},
 		},
 	}
 	payload, err := proto.Marshal(envelope)
