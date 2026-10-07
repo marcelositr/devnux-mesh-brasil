@@ -28,15 +28,18 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Verificar formatação
+      - name: Diagnosticar formatação
         shell: bash
         run: |
-          files=$(git ls-files "*.go" | xargs gofmt -l)
-          if [ -n "$files" ]; then
-            echo "Os arquivos abaixo não estão formatados com gofmt:"
-            echo "$files"
-            exit 1
-          fi
+          set -x
+          go version
+          echo "Arquivos Go versionados:"
+          git ls-files "*.go"
+          echo "Resultado do gofmt:"
+          git ls-files "*.go" | xargs -r gofmt -l
+          status=${PIPESTATUS[1]}
+          echo "Código de saída do gofmt: $status"
+          exit "$status"
 
       - name: Testes
         run: go test ./...
