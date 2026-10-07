@@ -7,7 +7,14 @@ import (
 	"fmt"
 )
 
-func NewNonce(from, packetID uint32) []byte {
+var DefaultPSK = []byte{
+	0xd4, 0xf1, 0xbb, 0x3a,
+	0x20, 0x29, 0x07, 0x59,
+	0xf0, 0xbc, 0xff, 0xab,
+	0xcf, 0x4e, 0x69, 0x01,
+}
+
+func NewNonce(from uint32, packetID uint32) []byte {
 	nonce := make([]byte, aes.BlockSize)
 	binary.LittleEndian.PutUint32(nonce[0:4], packetID)
 	binary.LittleEndian.PutUint32(nonce[4:8], from)
@@ -44,11 +51,6 @@ func normalizeKey(psk []byte) ([]byte, error) {
 	case 0:
 		return nil, fmt.Errorf("PSK vazia")
 	default:
-		if len(psk) < 16 {
-			key := make([]byte, 16)
-			copy(key, psk)
-			return key, nil
-		}
 		return nil, fmt.Errorf("tamanho de PSK não suportado: %d", len(psk))
 	}
 }
