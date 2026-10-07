@@ -1,31 +1,29 @@
 package broker
 
 import (
-	"errors"
-	"fmt"
 	"log/slog"
-	"strings"
 
 	mqtt "github.com/mochi-mqtt/server/v2"
 	"github.com/mochi-mqtt/server/v2/packets"
-	"google.golang.org/protobuf/proto"
 
 	meshtastic "github.com/kmpm/meshtastic-protobufs.go/v2/generated"
 
 	"github.com/marcelositr/devnux-mesh-brasil/internal/config"
-	"github.com/marcelositr/devnux-mesh-brasil/internal/crypto"
 )
 
-// Handler integra o ciclo de vida MQTT com o processamento dos pacotes Meshtastic.
+// Handler integra os eventos MQTT com o processamento de pacotes do broker.
 type Handler struct {
 	mqtt.HookBase
-	logger *slog.Logger
-	config config.Config
+	logger    *slog.Logger
+	processor packetProcessor
 }
 
-// NewHandler cria o hook responsável pelo processamento de mensagens MQTT.
+// NewHandler cria o hook responsável pelo ciclo de vida das mensagens MQTT.
 func NewHandler(logger *slog.Logger, cfg config.Config) *Handler {
-	return &Handler{logger: logger, config: cfg}
+	return &Handler{
+		logger: logger,
+		processor: newPacketProcessor(cfg.DefaultPSK),
+	}
 }
 
 func (h *Handler) ID() string {
@@ -60,7 +58,7 @@ func (h *Handler) OnSubscribe(client *mqtt.Client, packet packets.Packet) packet
 	return packet
 }
 
-// OnPublish valida e interpreta o envelope Meshtastic antes de permitir a publicação.
+// OnPublish valida e interpreta o payload Meshtastic antes de permitir a publicação.
 // O pacote original é preservado para que o broker MQTT continue seu fluxo normal.
 func (h *Handler) OnPublish(client *mqtt.Client, packet packets.Packet) (packets.Packet, error) {
 	if len(packet.Payload) == 0 {
@@ -68,18 +66,18 @@ func (h *Handler) OnPublish(client *mqtt.Client, packet packets.Packet) (packets
 		return packet, packets.CodeSuccessIgnore
 	}
 
-	envelope, err := parseServiceEnvelope(packet.Payload)
+	envelope, err := h.processor.parseServiceEnvelope(packet.Payload)
 	if err != nil {
 		h.logger.Warn("falha ao decodificar protobuf", "topic", packet.TopicName, "client_id", client.ID)
 		return packet, packets.CodeSuccessIgnore
 	}
 
-	if err := validateServiceEnvelope(envelope); err != nil {
+	if err := h.processor.validateServiceEnvelope(envelope); err != nil {
 		h.logger.Warn("service envelope inválido", "topic", packet.TopicName, "client_id", client.ID, "erro", err)
 		return packet, packets.CodeSuccessIgnore
 	}
 
-	data, err := h.decryptMeshPacket(envelope)
+	data, err := h.processor.decryptMeshPacket(envelope)
 	if err != nil {
 		h.logger.Warn("não foi possível interpretar o pacote criptografado", "topic", packet.TopicName, "client_id", client.ID, "erro", err)
 		return packet, packets.CodeSuccessIgnore
@@ -87,69 +85,6 @@ func (h *Handler) OnPublish(client *mqtt.Client, packet packets.Packet) (packets
 
 	h.logReceivedMessage(packet.TopicName, client.ID, data)
 	return packet, nil
-}
-
-// parseServiceEnvelope converte o payload MQTT no envelope protobuf usado pelo protocolo.
-func parseServiceEnvelope(payload []byte) (*meshtastic.ServiceEnvelope, error) {
-	var envelope meshtastic.ServiceEnvelope
-	if err := proto.Unmarshal(payload, &envelope); err != nil {
-		return nil, err
-	}
-	return &envelope, nil
-}
-
-// validateServiceEnvelope verifica os campos mínimos necessários para processar um pacote.
-func validateServiceEnvelope(envelope *meshtastic.ServiceEnvelope) error {
-	if envelope == nil {
-		return errors.New("service envelope nulo")
-	}
-	if strings.TrimSpace(envelope.GetChannelId()) == "" {
-		return errors.New("channel ID vazio")
-	}
-	if strings.TrimSpace(envelope.GetGatewayId()) == "" {
-		return errors.New("gateway ID vazio")
-	}
-
-	packet := envelope.GetPacket()
-	if packet == nil {
-		return errors.New("packet ausente")
-	}
-	if packet.GetId() < 1 {
-		return errors.New("packet ID inválido")
-	}
-	if packet.GetFrom() < 1 {
-		return errors.New("origem do pacote inválida")
-	}
-	if len(packet.GetEncrypted()) < 1 {
-		return errors.New("payload criptografado ausente")
-	}
-	if packet.GetDecoded() != nil {
-		return errors.New("packet já possui payload decodificado")
-	}
-
-	return nil
-}
-
-// decryptMeshPacket descriptografa o pacote e interpreta o conteúdo como Data.
-func (h *Handler) decryptMeshPacket(envelope *meshtastic.ServiceEnvelope) (*meshtastic.Data, error) {
-	packet := envelope.GetPacket()
-	nonce := crypto.NewNonce(packet.GetFrom(), packet.GetId())
-
-	decrypted, err := crypto.TransformPacket(packet.GetEncrypted(), nonce, h.config.DefaultPSK)
-	if err != nil {
-		return nil, err
-	}
-
-	var data meshtastic.Data
-	if err := proto.Unmarshal(decrypted, &data); err != nil {
-		return nil, fmt.Errorf("decodificar data: %w", err)
-	}
-
-	if int32(data.GetPortnum()) <= 0 || len(data.GetPayload()) == 0 {
-		return nil, nil
-	}
-
-	return &data, nil
 }
 
 // logReceivedMessage registra mensagens de texto separadamente dos demais portnums.
