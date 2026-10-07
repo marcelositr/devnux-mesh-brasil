@@ -1,56 +1,77 @@
-# Reprodução do Meshtastic MQTT
+# Comportamento e protocolo MQTT do DevNux Mesh Brasil
 
 ## Objetivo
 
-Esta etapa reproduz em Go o comportamento efetivamente implementado no projeto de referência meshtastic/mqtt.
+Documentar o comportamento atualmente implementado pelo DevNux Mesh Brasil e os limites técnicos desta etapa.
 
-O README do projeto de referência também contém ideias futuras que não fazem parte do comportamento atual. Elas não são tratadas como funcionalidades implementadas.
-
-## Comportamentos reproduzidos
+## Comportamentos implementados
 
 1. Broker MQTT.
-2. Apenas endpoint MQTT criptografado na porta 8883.
+2. Endpoint MQTT sobre TLS na porta 8883.
 3. TLS 1.2 como protocolo mínimo.
 4. Conexões aceitas sem autenticação adicional.
 5. Inscrições MQTT aceitas sem filtragem adicional.
-6. Bloqueio de payload vazio.
-7. Decodificação de ServiceEnvelope em protobuf.
+6. Payload vazio ignorado.
+7. Decodificação de `ServiceEnvelope` em protobuf.
 8. Validação dos campos essenciais do envelope.
-9. Descriptografia do pacote de canal usando AES-CTR.
-10. Decodificação do resultado como Data.
+9. Descriptografia do pacote usando AES-CTR.
+10. Decodificação do resultado como `Data`.
 11. Registro de mensagens de texto e de outros portnums.
 12. Encerramento mediante SIGINT ou SIGTERM.
 
-## Diferenças deliberadas
+## Configuração de certificados
 
-- O certificado PFX e a senha existentes no projeto de referência não foram copiados.
-- A configuração do certificado foi externalizada por variáveis de ambiente.
-- A implementação usa bibliotecas Go em vez das bibliotecas .NET originais.
-- A estrutura de código foi separada em pacotes para manter o código testável e idiomático.
+O certificado e a chave privada são arquivos separados e configuráveis por ambiente:
 
-## Pontos que precisam de validação
+- `MQTT_CERTIFICATE_FILE`
+- `MQTT_PRIVATE_KEY_FILE`
 
-A compatibilidade criptográfica deve ser validada com um pacote real produzido pelo Meshtastic ou com vetores de teste confiáveis.
+A configuração padrão utiliza `certificate.pem` e `private.key`.
 
-O projeto de referência usa NonceGenerator da biblioteca Meshtastic para construir o nonce. A implementação Go reproduz a estrutura de 16 bytes usada pelo AES-CTR, confirmada pelo vetor de interoperabilidade C# e pelos testes automatizados de criptografia.
+## Criptografia
 
-## Fora do escopo atual
+A implementação utiliza AES-CTR.
 
-As seguintes ideias aparecem no README de referência, mas não estão implementadas no código analisado:
+O nonce possui 16 bytes e é construído a partir do identificador do pacote e da origem, em little-endian, mantendo os quatro bytes finais zerados.
 
-- rate limiting;
-- bloqueio de pacotes repetidos;
-- rate limiting por nó;
-- zero hopping;
-- bloqueio de tópicos desconhecidos;
-- bloqueio de pacotes não descriptografáveis;
-- filtragem de portnums;
-- fail2ban;
-- banimento de atores.
+A PSK padrão possui 16 bytes:
 
+`d4f1bb3a20290759f0bcffabcf4e6901`
+
+Também é possível configurar uma PSK de 16 ou 32 bytes pela variável `MESHTASTIC_DEFAULT_PSK`, em hexadecimal.
+
+A implementação possui teste de interoperabilidade para validar a construção do nonce e a descriptografia de um vetor conhecido.
+
+## Validação de pacotes
+
+Antes da descriptografia, o broker verifica:
+
+- `channel_id` preenchido;
+- `gateway_id` preenchido;
+- pacote presente;
+- identificador do pacote válido;
+- origem válida;
+- payload criptografado presente;
+- ausência de payload decodificado no pacote.
+
+Após a descriptografia, o conteúdo é interpretado como `Data`. Dados sem portnum válido ou sem payload são aceitos pelo processamento, mas não geram registro como mensagem de texto.
 
 ## Tópicos MQTT
 
-O projeto de referência não aplica filtragem ou validação específica sobre o nome do tópico no interceptor de publicação. O broker Go mantém o mesmo comportamento: o tópico é aceito e utilizado apenas no registro da mensagem.
+O nome do tópico não possui filtragem específica no processamento das publicações. Ele é preservado e utilizado no registro da mensagem.
 
-Também não foi introduzida seleção de PSK por `channel_id`. O projeto de referência usa diretamente a PSK padrão na descriptografia, portanto esta reprodução mantém a mesma semântica.
+Não há seleção de PSK por `channel_id`. A descriptografia utiliza a PSK padrão configurada para o broker.
+
+## Limites atuais
+
+Os seguintes recursos ainda não fazem parte da implementação:
+
+- rate limiting;
+- deduplicação de pacotes;
+- persistência;
+- ACL ou autorização por tópico;
+- filtragem de portnums;
+- observabilidade avançada;
+- mecanismos de banimento ou moderação.
+
+Esses recursos podem ser tratados em etapas futuras sem alterar o núcleo de processamento já validado.
