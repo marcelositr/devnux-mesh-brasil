@@ -3,19 +3,18 @@ package config
 import (
 	"bytes"
 	"testing"
+
+	"github.com/marcelositr/devnux-mesh-brasil/internal/crypto"
 )
 
 func TestDefaultPSK(t *testing.T) {
-	expected := []byte{
+	if !bytes.Equal(crypto.DefaultPSK, []byte{
 		0xd4, 0xf1, 0xbb, 0x3a,
 		0x20, 0x29, 0x07, 0x59,
 		0xf0, 0xbc, 0xff, 0xab,
 		0xcf, 0x4e, 0x69, 0x01,
-	}
-
-	got := defaultPSK()
-	if !bytes.Equal(got, expected) {
-		t.Fatalf("PSK padrão incompatível: %x != %x", got, expected)
+	}) {
+		t.Fatal("PSK padrão incompatível")
 	}
 }
 
@@ -27,8 +26,8 @@ func TestLoadUsesDefaultPSK(t *testing.T) {
 		t.Fatalf("Load() retornou erro: %v", err)
 	}
 
-	if !bytes.Equal(cfg.DefaultPSK, defaultPSK()) {
-		t.Fatalf("Load() não usou a PSK padrão: %x != %x", cfg.DefaultPSK, defaultPSK())
+	if !bytes.Equal(cfg.DefaultPSK, crypto.DefaultPSK) {
+		t.Fatalf("Load() não usou a PSK padrão: %x != %x", cfg.DefaultPSK, crypto.DefaultPSK)
 	}
 
 	if cfg.ListenAddress != ":8883" {
