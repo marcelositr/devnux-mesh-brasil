@@ -49,7 +49,7 @@ func (h *Handler) OnConnect(client *mqtt.Client, _ packets.Packet) error {
 	return nil
 }
 
-func (h *Handler) OnSubscribe(client *mqtt.Client, packet packets.Packet, _ []byte) packets.Packet {
+func (h *Handler) OnSubscribe(client *mqtt.Client, packet packets.Packet) packets.Packet {
 	// O projeto de referência permite todas as inscrições.
 	h.logger.Debug("inscrição MQTT recebida", "client_id", client.ID, "filters", packet.Filters)
 	return packet
@@ -58,18 +58,18 @@ func (h *Handler) OnSubscribe(client *mqtt.Client, packet packets.Packet, _ []by
 func (h *Handler) OnPublish(client *mqtt.Client, packet packets.Packet) (packets.Packet, error) {
 	if len(packet.Payload) == 0 {
 		h.logger.Warn("payload vazio recebido", "topic", packet.TopicName, "client_id", client.ID)
-		return packet, errors.New("payload vazio")
+		return packet, packets.CodeSuccessIgnore
 	}
 
 	var envelope meshtastic.ServiceEnvelope
 	if err := proto.Unmarshal(packet.Payload, &envelope); err != nil {
 		h.logger.Warn("falha ao decodificar protobuf", "topic", packet.TopicName, "client_id", client.ID)
-		return packet, fmt.Errorf("decodificar service envelope: %w", err)
+		return packet, packets.CodeSuccessIgnore
 	}
 
 	if err := validateServiceEnvelope(&envelope); err != nil {
 		h.logger.Warn("service envelope inválido", "topic", packet.TopicName, "client_id", client.ID, "erro", err)
-		return packet, err
+		return packet, packets.CodeSuccessIgnore
 	}
 
 	data, err := h.decryptMeshPacket(&envelope)
