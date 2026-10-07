@@ -51,8 +51,16 @@ Os detalhes estão em [Configuração e execução](docs/configuracao.md).
 
 A imagem do broker é construída em múltiplas etapas e executa o binário como usuário sem privilégios.
 
+Construção local:
+
 ```bash
 docker build -t devnux-mesh-brasil .
+```
+
+A imagem publicada pelo GitHub Actions fica disponível no GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/marcelositr/devnux-mesh-brasil:latest
 ```
 
 Para executar com TLS, monte um diretório contendo `certificate.pem` e `private.key`:
@@ -61,7 +69,7 @@ Para executar com TLS, monte um diretório contendo `certificate.pem` e `private
 docker run --rm \
   -p 8883:8883 \
   -v "$PWD/certs:/etc/devnux/certs:ro" \
-  devnux-mesh-brasil
+  ghcr.io/marcelositr/devnux-mesh-brasil:latest
 ```
 
 A imagem utiliza:
@@ -72,6 +80,8 @@ A imagem utiliza:
 - `MESHTASTIC_DEFAULT_PSK` para substituir a PSK padrão quando necessário.
 
 O certificado e a chave privada não fazem parte da imagem nem do repositório.
+
+As imagens da branch `main` recebem a tag `latest`. Releases Git com tags no formato `vX.Y.Z` também geram tags de versão no GHCR.
 
 ## TLS
 
