@@ -47,6 +47,32 @@ A PSK fornecida por ambiente deve ser hexadecimal e resultar em 16 ou 32 bytes.
 
 Os detalhes estão em [Configuração e execução](docs/configuracao.md).
 
+## Docker
+
+A imagem do broker é construída em múltiplas etapas e executa o binário como usuário sem privilégios.
+
+```bash
+docker build -t devnux-mesh-brasil .
+```
+
+Para executar com TLS, monte um diretório contendo `certificate.pem` e `private.key`:
+
+```bash
+docker run --rm \
+  -p 8883:8883 \
+  -v "$PWD/certs:/etc/devnux/certs:ro" \
+  devnux-mesh-brasil
+```
+
+A imagem utiliza:
+
+- `/etc/devnux/certs/certificate.pem` para o certificado;
+- `/etc/devnux/certs/private.key` para a chave privada;
+- `:8883` como endereço MQTT padrão;
+- `MESHTASTIC_DEFAULT_PSK` para substituir a PSK padrão quando necessário.
+
+O certificado e a chave privada não fazem parte da imagem nem do repositório.
+
 ## TLS
 
 O listener utiliza TLS 1.2 como versão mínima e recebe certificado e chave privada de arquivos separados.
