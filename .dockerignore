@@ -1,0 +1,6 @@
+.git
+.github
+/tmp
+*.pem
+*.key
+*.crt
