@@ -42,6 +42,53 @@ go run ./cmd/broker
 
 O processo encerra de forma controlada ao receber SIGINT ou SIGTERM.
 
+## Docker
+
+O projeto possui um `Dockerfile` de múltiplas etapas que compila o broker e cria uma imagem de runtime mínima.
+
+Construção:
+
+```bash
+docker build -t devnux-mesh-brasil .
+```
+
+A imagem executa o broker como usuário sem privilégios. O certificado e a chave privada devem ser fornecidos em tempo de execução, fora da imagem.
+
+Estrutura esperada no host:
+
+```text
+certs/
+├── certificate.pem
+└── private.key
+```
+
+Execução:
+
+```bash
+docker run --rm \
+  -p 8883:8883 \
+  -v "$PWD/certs:/etc/devnux/certs:ro" \
+  devnux-mesh-brasil
+```
+
+Dentro do container, os padrões são:
+
+- `MQTT_LISTEN_ADDRESS=:8883`;
+- `MQTT_CERTIFICATE_FILE=/etc/devnux/certs/certificate.pem`;
+- `MQTT_PRIVATE_KEY_FILE=/etc/devnux/certs/private.key`.
+
+Para utilizar outra PSK:
+
+```bash
+docker run --rm \
+  -p 8883:8883 \
+  -v "$PWD/certs:/etc/devnux/certs:ro" \
+  -e MESHTASTIC_DEFAULT_PSK="d4f1bb3a20290759f0bcffabcf4e6901" \
+  devnux-mesh-brasil
+```
+
+A chave privada, o certificado e outros segredos não devem ser copiados para dentro da imagem.
+
 ## Exemplo de configuração
 
 ```bash
@@ -65,4 +112,4 @@ Antes de uma implantação pública, devem ser definidos requisitos de autentica
 
 ## Verificação
 
-Após alterações de configuração ou infraestrutura, execute a bateria completa descrita em [Guia de desenvolvimento](desenvolvimento.md).
+Após alterações de configuração ou infraestrutura, execute a bateria completa descrita em [Guia de desenvolvimento](desenvolvimento.md). Os resultados da validação funcional e Docker estão registrados em [Validação](validacao.md).
