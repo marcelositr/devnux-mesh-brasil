@@ -10,6 +10,8 @@ O **DevNux Mesh Brasil** é um projeto de infraestrutura de código aberto volta
 
 O projeto está em desenvolvimento e validação técnica. O núcleo atual está coberto por testes automatizados e foi validado com `go test`, `go vet` e compilação do broker.
 
+A validação em host e Docker já confirmou o fluxo principal com payloads Meshtastic produzidos em ambiente de teste. **A validação com hardware Meshtastic físico e real ainda é uma etapa pendente.**
+
 O escopo atual é deliberadamente pequeno: o objetivo é manter um broker funcional, compreensível e fácil de evoluir sem introduzir abstrações desnecessárias.
 
 ## O que o broker faz
@@ -127,7 +129,7 @@ Ainda não fazem parte do núcleo atual:
 - observabilidade avançada;
 - mecanismos de banimento ou moderação.
 
-Esses limites são intencionais nesta etapa e não devem ser confundidos com funcionalidades já implementadas.
+Esses limites são intencionais nesta etapa. As possibilidades de evolução foram registradas em [Evolução futura e hardening](docs/evolucao.md) e **não devem ser tratadas como requisitos de implementação antes da validação com hardware Meshtastic físico e real**.
 
 ## Documentação
 
@@ -137,6 +139,8 @@ A documentação foi separada por responsabilidade para evitar duplicação:
 - [Protocolo e criptografia](docs/protocolo.md) — envelope, validação, nonce, AES-CTR e PSK.
 - [Configuração e execução](docs/configuracao.md) — ambiente, TLS, execução e testes.
 - [Guia de desenvolvimento](docs/desenvolvimento.md) — manutenção, mudanças e validação.
+- [Validação](docs/validacao.md) — validações funcionais e limites conhecidos.
+- [Evolução futura e hardening](docs/evolucao.md) — possibilidades futuras e critérios para avaliá-las.
 - [Uso de IA](docs/uso-de-ia.md) — regras para uso responsável de ferramentas de IA no desenvolvimento.
 
 Cada documento trata apenas do seu próprio assunto e aponta para os demais quando necessário.

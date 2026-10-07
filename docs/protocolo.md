@@ -58,6 +58,8 @@ O fluxo atual consegue registrar mensagens de texto e outros portnums conforme o
 
 O núcleo criptográfico possui teste de interoperabilidade baseado em vetor conhecido. A validação automatizada deve ser executada antes de alterações no protocolo ou na criptografia.
 
+A validação com hardware Meshtastic físico e real ainda é uma etapa pendente. Qualquer decisão futura que altere filtragem, autorização ou controle de tráfego deve considerar o comportamento observado nessa etapa.
+
 Os comandos de validação estão em [Guia de desenvolvimento](desenvolvimento.md).
 
 ## Limites
@@ -65,3 +67,5 @@ Os comandos de validação estão em [Guia de desenvolvimento](desenvolvimento.m
 A implementação atual utiliza uma única PSK padrão para o broker. Não existe seleção automática de PSK por `channel_id`.
 
 Também não há, nesta etapa, filtragem avançada de tópicos ou portnums.
+
+Possíveis evoluções de hardening estão documentadas separadamente em [Evolução futura e hardening](evolucao.md) e não constituem requisitos da implementação atual.
