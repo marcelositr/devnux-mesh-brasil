@@ -46,7 +46,23 @@ O processo encerra de forma controlada ao receber SIGINT ou SIGTERM.
 
 O projeto possui um `Dockerfile` de múltiplas etapas que compila o broker e cria uma imagem de runtime mínima.
 
-Construção:
+### Imagem publicada
+
+O GitHub Actions publica a imagem no GitHub Container Registry em:
+
+```text
+ghcr.io/marcelositr/devnux-mesh-brasil
+```
+
+A tag `latest` acompanha a branch `main`. Tags Git no formato `vX.Y.Z` também geram tags de versão no registry.
+
+Para obter a imagem:
+
+```bash
+docker pull ghcr.io/marcelositr/devnux-mesh-brasil:latest
+```
+
+Construção local:
 
 ```bash
 docker build -t devnux-mesh-brasil .
@@ -62,13 +78,13 @@ certs/
 └── private.key
 ```
 
-Execução:
+Execução da imagem publicada:
 
 ```bash
 docker run --rm \
   -p 8883:8883 \
   -v "$PWD/certs:/etc/devnux/certs:ro" \
-  devnux-mesh-brasil
+  ghcr.io/marcelositr/devnux-mesh-brasil:latest
 ```
 
 Dentro do container, os padrões são:
@@ -84,7 +100,7 @@ docker run --rm \
   -p 8883:8883 \
   -v "$PWD/certs:/etc/devnux/certs:ro" \
   -e MESHTASTIC_DEFAULT_PSK="d4f1bb3a20290759f0bcffabcf4e6901" \
-  devnux-mesh-brasil
+  ghcr.io/marcelositr/devnux-mesh-brasil:latest
 ```
 
 A chave privada, o certificado e outros segredos não devem ser copiados para dentro da imagem.
