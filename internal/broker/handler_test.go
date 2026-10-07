@@ -170,7 +170,7 @@ func TestDecryptMeshPacketReturnsErrorForInvalidCiphertext(t *testing.T) {
 		},
 	}
 
-	got, err := handler.decryptMeshPacket(envelope)
+	got, err := processor.decryptMeshPacket(envelope)
 	if err == nil {
 		t.Fatal("decryptMeshPacket() deveria retornar erro para ciphertext inválido")
 	}
@@ -183,7 +183,7 @@ func TestDecryptMeshPacketReturnsNilForUnknownData(t *testing.T) {
 	processor := testProcessor()
 	envelope := testEnvelope(t, &meshtastic.Data{Portnum: 0, Payload: []byte("unknown")})
 
-	got, err := handler.decryptMeshPacket(envelope)
+	got, err := processor.decryptMeshPacket(envelope)
 	if err != nil {
 		t.Fatalf("decryptMeshPacket() deveria aceitar Data não reconhecido: %v", err)
 	}
