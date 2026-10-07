@@ -46,14 +46,12 @@ func (h *Handler) Init(any) error {
 
 // OnConnect registra a conexão aceita pelo broker sem aplicar autenticação adicional.
 func (h *Handler) OnConnect(client *mqtt.Client, _ packets.Packet) error {
-	// A conexão é aceita sem autenticação adicional nesta etapa do broker.
 	h.logger.Debug("cliente conectado", "client_id", client.ID)
 	return nil
 }
 
 // OnSubscribe registra a inscrição e preserva os filtros recebidos pelo cliente.
 func (h *Handler) OnSubscribe(client *mqtt.Client, packet packets.Packet) packets.Packet {
-	// As inscrições são aceitas sem restrições adicionais nesta etapa do broker.
 	h.logger.Debug("inscrição MQTT recebida", "client_id", client.ID, "filters", packet.Filters)
 	return packet
 }
