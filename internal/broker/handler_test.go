@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"testing"
 
+meshtastic "github.com/kmpm/meshtastic-protobufs.go/v2/generated"
 	mqtt "github.com/mochi-mqtt/server/v2"
 	"github.com/mochi-mqtt/server/v2/packets"
-	meshtastic "github.com/kmpm/meshtastic-protobufs.go/v2/generated"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/marcelositr/devnux-mesh-brasil/internal/config"
@@ -88,8 +88,8 @@ func TestOnPublishBlocksEnvelopeWhenDecryptionCannotDecodeData(t *testing.T) {
 		ChannelId: "channel",
 		GatewayId: "gateway",
 		Packet: &meshtastic.MeshPacket{
-			Id:   1,
-			From: 2,
+			Id:             1,
+			From:           2,
 			PayloadVariant: &meshtastic.MeshPacket_Encrypted{
 				Encrypted: []byte{1, 2, 3, 4},
 			},
