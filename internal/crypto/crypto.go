@@ -16,8 +16,8 @@ var DefaultPSK = []byte{
 
 func NewNonce(from uint32, packetID uint32) []byte {
 	nonce := make([]byte, aes.BlockSize)
-	binary.LittleEndian.PutUint32(nonce[0:4], packetID)
-	binary.LittleEndian.PutUint32(nonce[4:8], from)
+	binary.LittleEndian.PutUint64(nonce[0:8], uint64(packetID))
+	binary.LittleEndian.PutUint32(nonce[8:12], from)
 	return nonce
 }
 
