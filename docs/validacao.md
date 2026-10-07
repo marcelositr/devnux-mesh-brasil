@@ -59,8 +59,16 @@ cliente MQTT
 
 Após o teste, a permissão da chave privada temporária deve ser restaurada para `0600`.
 
+## Validação com hardware físico
+
+A validação com hardware Meshtastic físico e real ainda não foi concluída.
+
+Essa etapa é obrigatória antes de qualquer implementação de hardening ou moderação que altere o tratamento normal do tráfego. O objetivo é observar o comportamento real de nós, gateways, tópicos, retransmissões, reconexões, identificação de nós e volume de tráfego antes de definir regras.
+
 ## Limites da validação
 
-A validação confirma o funcionamento da imagem Docker e do fluxo principal do broker. Ela não substitui testes de implantação em ambiente público.
+A validação atual confirma o funcionamento do fluxo principal em ambiente de teste e da imagem Docker. Ela **não confirma ainda o comportamento do broker em uma rede Meshtastic física real**.
 
 Continuam fora do escopo atual mecanismos como autenticação MQTT, ACL, rate limiting, deduplicação, persistência, moderação e observabilidade avançada.
+
+Esses itens estão registrados como possibilidades futuras em [Evolução futura e hardening](evolucao.md). A lista deverá ser revisada após os testes com hardware real; itens que não demonstrarem necessidade devem ser descartados.
