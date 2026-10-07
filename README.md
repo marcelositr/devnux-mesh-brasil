@@ -1,5 +1,7 @@
 # DevNux Mesh Brasil
 
+[![CI](https://github.com/marcelositr/devnux-mesh-brasil/actions/workflows/ci.yml/badge.svg)](https://github.com/marcelositr/devnux-mesh-brasil/actions/workflows/ci.yml)
+
 Broker MQTT para integração de redes Meshtastic.
 
 O **DevNux Mesh Brasil** é um projeto de infraestrutura de código aberto voltado ao recebimento e processamento de mensagens Meshtastic por MQTT. O projeto implementa o transporte MQTT sobre TLS, valida envelopes protobuf, descriptografa pacotes Meshtastic e registra os dados processados.
