@@ -88,8 +88,8 @@ func TestOnPublishBlocksEnvelopeWhenDecryptionCannotDecodeData(t *testing.T) {
 		ChannelId: "channel",
 		GatewayId: "gateway",
 		Packet: &meshtastic.MeshPacket{
-			Id:        1,
-			From:      2,
+			Id:   1,
+			From: 2,
 			PayloadVariant: &meshtastic.MeshPacket_Encrypted{
 				Encrypted: []byte{1, 2, 3, 4},
 			},
