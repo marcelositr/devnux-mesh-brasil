@@ -20,6 +20,10 @@ func testHandler() *Handler {
 	return NewHandler(logger, config.Config{DefaultPSK: crypto.DefaultPSK})
 }
 
+func testProcessor() packetProcessor {
+	return newPacketProcessor(crypto.DefaultPSK)
+}
+
 func testEnvelope(t *testing.T, data *meshtastic.Data) *meshtastic.ServiceEnvelope {
 	t.Helper()
 
@@ -52,6 +56,7 @@ func testEnvelope(t *testing.T, data *meshtastic.Data) *meshtastic.ServiceEnvelo
 }
 
 func TestValidateServiceEnvelope(t *testing.T) {
+	processor := testProcessor()
 	valid := &meshtastic.ServiceEnvelope{
 		ChannelId: "channel",
 		GatewayId: "gateway",
@@ -126,7 +131,7 @@ func TestValidateServiceEnvelope(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := validateServiceEnvelope(tt.envelope); (err != nil) != tt.wantErr {
+			if err := processor.validateServiceEnvelope(tt.envelope); (err != nil) != tt.wantErr {
 				t.Fatalf("validateServiceEnvelope() error = %v, wantErr = %v", err, tt.wantErr)
 			}
 		})
@@ -134,14 +139,14 @@ func TestValidateServiceEnvelope(t *testing.T) {
 }
 
 func TestDecryptMeshPacket(t *testing.T) {
-	handler := testHandler()
+	processor := testProcessor()
 	want := &meshtastic.Data{
 		Portnum: 1,
 		Payload: []byte("hello meshtastic"),
 	}
 
 	envelope := testEnvelope(t, want)
-	got, err := handler.decryptMeshPacket(envelope)
+	got, err := processor.decryptMeshPacket(envelope)
 	if err != nil {
 		t.Fatalf("decryptMeshPacket() retornou erro: %v", err)
 	}
@@ -152,7 +157,7 @@ func TestDecryptMeshPacket(t *testing.T) {
 }
 
 func TestDecryptMeshPacketReturnsErrorForInvalidCiphertext(t *testing.T) {
-	handler := testHandler()
+	processor := testProcessor()
 	envelope := &meshtastic.ServiceEnvelope{
 		ChannelId: "channel",
 		GatewayId: "gateway",
@@ -175,7 +180,7 @@ func TestDecryptMeshPacketReturnsErrorForInvalidCiphertext(t *testing.T) {
 }
 
 func TestDecryptMeshPacketReturnsNilForUnknownData(t *testing.T) {
-	handler := testHandler()
+	processor := testProcessor()
 	envelope := testEnvelope(t, &meshtastic.Data{Portnum: 0, Payload: []byte("unknown")})
 
 	got, err := handler.decryptMeshPacket(envelope)
