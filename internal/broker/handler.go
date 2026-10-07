@@ -48,14 +48,14 @@ func (h *Handler) Init(any) error {
 
 // OnConnect registra a conexão aceita pelo broker sem aplicar autenticação adicional.
 func (h *Handler) OnConnect(client *mqtt.Client, _ packets.Packet) error {
-	// O projeto de referência permite a conexão sem autenticação adicional.
+	// A conexão é aceita sem autenticação adicional nesta etapa do broker.
 	h.logger.Debug("cliente conectado", "client_id", client.ID)
 	return nil
 }
 
 // OnSubscribe registra a inscrição e preserva os filtros recebidos pelo cliente.
 func (h *Handler) OnSubscribe(client *mqtt.Client, packet packets.Packet) packets.Packet {
-	// O projeto de referência permite todas as inscrições.
+	// As inscrições são aceitas sem restrições adicionais nesta etapa do broker.
 	h.logger.Debug("inscrição MQTT recebida", "client_id", client.ID, "filters", packet.Filters)
 	return packet
 }
@@ -74,12 +74,12 @@ func (h *Handler) OnPublish(client *mqtt.Client, packet packets.Packet) (packets
 		return packet, packets.CodeSuccessIgnore
 	}
 
-	if err := validateServiceEnvelope(&envelope); err != nil {
+	if err := validateServiceEnvelope(envelope); err != nil {
 		h.logger.Warn("service envelope inválido", "topic", packet.TopicName, "client_id", client.ID, "erro", err)
 		return packet, packets.CodeSuccessIgnore
 	}
 
-	data, err := h.decryptMeshPacket(&envelope)
+	data, err := h.decryptMeshPacket(envelope)
 	if err != nil {
 		h.logger.Warn("não foi possível interpretar o pacote criptografado", "topic", packet.TopicName, "client_id", client.ID, "erro", err)
 		return packet, packets.CodeSuccessIgnore
