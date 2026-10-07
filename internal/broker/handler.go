@@ -21,7 +21,7 @@ type Handler struct {
 // NewHandler cria o hook responsável pelo ciclo de vida das mensagens MQTT.
 func NewHandler(logger *slog.Logger, cfg config.Config) *Handler {
 	return &Handler{
-		logger: logger,
+		logger:    logger,
 		processor: newPacketProcessor(cfg.DefaultPSK),
 	}
 }
