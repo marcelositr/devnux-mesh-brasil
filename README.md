@@ -1,51 +1,56 @@
 # DevNux Mesh Brasil
 
-Infraestrutura MQTT comunitária para integração e comunicação entre redes Meshtastic no Brasil.
-
-## Reprodução do projeto de referência
-
-Esta branch contém a reprodução inicial, em Go, do projeto meshtastic/mqtt.
-
-O objetivo desta etapa é reproduzir o comportamento existente no projeto de referência antes de introduzir decisões específicas de arquitetura do DevNux.
+Infraestrutura MQTT para integração e comunicação entre redes Meshtastic no Brasil.
 
 ## Status
 
 **Em desenvolvimento e testes.**
 
-## Escopo desta etapa
+## Escopo atual
 
 - Broker MQTT.
 - Endpoint MQTT sobre TLS na porta 8883.
-- Aceitação de conexões.
+- TLS 1.2 como protocolo mínimo.
+- Aceitação de conexões MQTT.
 - Aceitação de inscrições MQTT.
-- Recepção de ServiceEnvelope em protobuf.
-- Validação do envelope.
-- Descriptografia AES-CTR de pacotes de canal.
-- Decodificação do payload Data.
+- Recepção de `ServiceEnvelope` em protobuf.
+- Validação dos campos essenciais do envelope.
+- Descriptografia AES-CTR de pacotes Meshtastic.
+- Decodificação do payload como `Data`.
 - Registro de mensagens de texto e outros portnums.
 - Encerramento controlado por SIGINT/SIGTERM.
-
-## Certificados
-
-O projeto de referência utiliza um certificado PFX com uma senha embutida no código. Isso não será reproduzido.
-
-Nesta implementação, o certificado e a chave privada são arquivos separados e configuráveis por variáveis de ambiente:
-
-- MQTT_CERTIFICATE_FILE
-- MQTT_PRIVATE_KEY_FILE
-
-Nunca coloque uma chave privada real no repositório.
 
 ## Configuração
 
 Por padrão:
 
-- MQTT TLS: :8883
-- certificado: certificate.pem
-- chave privada: private.key
+- endereço MQTT: `:8883`
+- certificado: `certificate.pem`
+- chave privada: `private.key`
 - PSK padrão Meshtastic: `d4f1bb3a20290759f0bcffabcf4e6901` (16 bytes)
 
-As configurações podem ser alteradas por variáveis de ambiente.
+As configurações podem ser alteradas por variáveis de ambiente:
+
+- `MQTT_LISTEN_ADDRESS`
+- `MQTT_CERTIFICATE_FILE`
+- `MQTT_PRIVATE_KEY_FILE`
+- `MESHTASTIC_DEFAULT_PSK`
+
+A PSK configurada por ambiente deve ser hexadecimal e possuir 16 ou 32 bytes após a decodificação.
+
+Nunca coloque uma chave privada real no repositório.
+
+## TLS
+
+O broker utiliza certificado e chave privada em arquivos separados. O listener aceita somente TLS 1.2 ou superior.
+
+Exemplo:
+
+```bash
+MQTT_CERTIFICATE_FILE=certificate.pem \
+MQTT_PRIVATE_KEY_FILE=private.key \
+./broker
+```
 
 ## Testes locais
 
@@ -57,25 +62,36 @@ Dependências:
 
 Comandos:
 
-    go mod tidy
-    go test ./...
-    go vet ./...
-    go build ./cmd/broker
+```bash
+go test ./...
+go vet ./...
+go build ./cmd/broker
+```
 
-Para iniciar:
+## Comportamento do broker
 
-    MQTT_CERTIFICATE_FILE=certificate.pem \
-    MQTT_PRIVATE_KEY_FILE=private.key \
-    ./broker
+Conexões e inscrições MQTT são aceitas sem autenticação ou filtragem adicional nesta etapa.
 
-O broker escuta somente em TLS, como o código atual do projeto de referência.
+Publicações são interpretadas como `ServiceEnvelope`. Payloads vazios, protobufs inválidos, envelopes inválidos e pacotes que não possam ser descriptografados ou interpretados são ignorados pelo fluxo de publicação.
 
-## Documentação
+O nome do tópico não possui filtragem específica nesta etapa. Ele é utilizado para registro das mensagens.
 
-A análise de compatibilidade e os pontos que ainda precisam de validação estão em:
+A descriptografia utiliza a PSK padrão configurada para o broker. Não há seleção de PSK por `channel_id`.
 
-docs/reproducao-meshtastic-mqtt.md
+## Documentação técnica
 
-## Observação
+Os detalhes do protocolo processado, validações, criptografia e decisões de implementação estão em:
 
-Esta branch ainda não representa a arquitetura final do DevNux Mesh Brasil. Ela existe para reproduzir e testar o comportamento do projeto de referência.
+`docs/reproducao-meshtastic-mqtt.md`
+
+## Fora do escopo atual
+
+Não fazem parte da implementação atual:
+
+- rate limiting;
+- deduplicação de pacotes;
+- persistência;
+- ACL ou autorização por tópico;
+- filtragem de portnums;
+- observabilidade avançada;
+- mecanismos de banimento ou moderação.
