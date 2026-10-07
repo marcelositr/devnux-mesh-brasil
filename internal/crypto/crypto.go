@@ -7,6 +7,7 @@ import (
 	"fmt"
 )
 
+// DefaultPSK é a chave padrão usada para descriptografar pacotes Meshtastic.
 var DefaultPSK = []byte{
 	0xd4, 0xf1, 0xbb, 0x3a,
 	0x20, 0x29, 0x07, 0x59,
@@ -14,6 +15,7 @@ var DefaultPSK = []byte{
 	0xcf, 0x4e, 0x69, 0x01,
 }
 
+// NewNonce monta o nonce de 16 bytes a partir da origem e do identificador do pacote.
 func NewNonce(from uint32, packetID uint32) []byte {
 	nonce := make([]byte, aes.BlockSize)
 	binary.LittleEndian.PutUint64(nonce[0:8], uint64(packetID))
@@ -21,6 +23,8 @@ func NewNonce(from uint32, packetID uint32) []byte {
 	return nonce
 }
 
+// TransformPacket aplica AES-CTR ao payload usando a chave e o nonce fornecidos.
+// O mesmo procedimento serve para criptografar e descriptografar.
 func TransformPacket(input, nonce, psk []byte) ([]byte, error) {
 	if len(nonce) != aes.BlockSize {
 		return nil, fmt.Errorf("nonce inválido: esperado %d bytes, recebido %d", aes.BlockSize, len(nonce))
@@ -42,6 +46,7 @@ func TransformPacket(input, nonce, psk []byte) ([]byte, error) {
 	return output, nil
 }
 
+// normalizeKey cria uma cópia da PSK após validar os tamanhos aceitos pelo AES.
 func normalizeKey(psk []byte) ([]byte, error) {
 	switch len(psk) {
 	case 16, 32:
