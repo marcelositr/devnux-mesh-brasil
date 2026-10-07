@@ -1,101 +1,81 @@
-# Meshtastic MQTT Brasil
+# DevNux Mesh Brasil
 
-Infraestrutura MQTT comunitária para integração e comunicação entre redes Meshtastic no Brasil, com foco em uso público, colaboração e continuidade da comunidade.
+Infraestrutura MQTT comunitária para integração e comunicação entre redes Meshtastic no Brasil.
+
+## Reprodução do projeto de referência
+
+Esta branch contém a reprodução inicial, em Go, do projeto meshtastic/mqtt.
+
+O objetivo desta etapa é reproduzir o comportamento existente no projeto de referência antes de introduzir decisões específicas de arquitetura do DevNux.
 
 ## Status
 
-**Em planejamento.**
+**Em desenvolvimento e testes.**
 
-Este repositório é o ponto de partida para documentar, desenvolver e acompanhar uma futura infraestrutura MQTT voltada ao ecossistema Meshtastic no Brasil.
+## Escopo desta etapa
 
-## Objetivo
+- Broker MQTT.
+- Endpoint MQTT sobre TLS na porta 8883.
+- Aceitação de conexões.
+- Aceitação de inscrições MQTT.
+- Recepção de ServiceEnvelope em protobuf.
+- Validação do envelope.
+- Descriptografia AES-CTR de pacotes de canal.
+- Decodificação do payload Data.
+- Registro de mensagens de texto e outros portnums.
+- Encerramento controlado por SIGINT/SIGTERM.
 
-Estudar e, futuramente, desenvolver uma infraestrutura que permita interligar diferentes redes e regiões Meshtastic por meio de MQTT, sem substituir o funcionamento local das redes LoRa.
+## Certificados
 
-A ideia é que a comunicação local continue funcionando mesmo quando a conexão com a infraestrutura MQTT ou com a Internet estiver indisponível.
+O projeto de referência utiliza um certificado PFX com uma senha embutida no código. Isso não será reproduzido.
 
-## Princípios
+Nesta implementação, o certificado e a chave privada são arquivos separados e configuráveis por variáveis de ambiente:
 
-- Projeto voltado à comunidade.
-- Código e conhecimento devem permanecer acessíveis à comunidade conforme os termos da licença.
-- A infraestrutura deve complementar as redes locais, não depender delas para funcionar.
-- Prioridade para continuidade, simplicidade e funcionamento em situações reais.
-- Desenvolvimento colaborativo e documentado.
-- Respeito à origem e ao histórico do projeto.
+- MQTT_CERTIFICATE_FILE
+- MQTT_PRIVATE_KEY_FILE
 
-## Possível arquitetura
+Nunca coloque uma chave privada real no repositório.
 
-```text
-              NÚCLEO MQTT
-                    │
-        ┌───────────┴───────────┐
-        │                       │
-     Região A                Região B
-        │                       │
-     Gateway                 Gateway
-        │                       │
-       LoRa                    LoRa
-        │                       │
-    Rede local             Rede local
-        │                       │
-    Dispositivos            Dispositivos
-```
+## Configuração
 
-A arquitetura definitiva ainda não está definida. Ela deverá ser construída a partir de testes com hardware real, redes Meshtastic reais e gateways funcionando em condições práticas.
+Por padrão:
 
-## Desenvolvimento
+- MQTT TLS: :8883
+- certificado: certificate.pem
+- chave privada: private.key
+- PSK padrão Meshtastic: meshtastic_ota_default_psk_v1!!!
 
-O desenvolvimento deverá seguir uma evolução gradual:
+As configurações podem ser alteradas por variáveis de ambiente.
 
-1. Conhecer e testar o Meshtastic em hardware real.
-2. Construir e observar redes locais.
-3. Testar gateways.
-4. Estudar a integração com MQTT.
-5. Testar a comunicação entre regiões.
-6. Avaliar disponibilidade, segurança e continuidade.
-7. Documentar os resultados.
-8. Somente então considerar uma infraestrutura de maior escala.
+## Testes locais
 
-## Situação atual
+Dependências:
 
-Nenhuma infraestrutura nacional está sendo implantada neste momento.
+- Go instalado.
+- Um certificado TLS para teste.
+- Cliente MQTT para teste.
 
-Este repositório existe para preservar a ideia, organizar o planejamento e servir como base para um possível desenvolvimento futuro.
+Comandos:
 
-## Licença
+    go mod tidy
+    go test ./...
+    go vet ./...
+    go build ./cmd/broker
 
-Este projeto utiliza a **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+Para iniciar:
 
-A licença permite uso, estudo, modificação e distribuição do projeto, inclusive para fins comerciais, desde que sejam respeitadas as condições da AGPL-3.0, incluindo as obrigações relacionadas à disponibilização do código-fonte correspondente em versões modificadas oferecidas como serviço pela rede.
+    MQTT_CERTIFICATE_FILE=certificate.pem \
+    MQTT_PRIVATE_KEY_FILE=private.key \
+    ./broker
 
-Consulte o arquivo [`LICENSE`](LICENSE) para os termos completos.
+O broker escuta somente em TLS, como o código atual do projeto de referência.
 
-## Autoria e origem
+## Documentação
 
-Projeto iniciado por **marcelositr**.
+A análise de compatibilidade e os pontos que ainda precisam de validação estão em:
 
-O histórico público deste repositório faz parte da documentação da origem e da evolução do projeto. Contribuições posteriores devem respeitar a licença e preservar os avisos de autoria e licença aplicáveis.
+docs/reproducao-meshtastic-mqtt.md
 
-Eventuais registros formais de versões do software junto ao INPI poderão ser realizados conforme a evolução do projeto.
+## Observação
 
-## Contribuições
-
-Contribuições, testes, documentação, sugestões e implementações poderão ser incorporados ao projeto conforme sua evolução.
-
-Antes de iniciar uma implementação de grande porte, consulte as discussões e a documentação existentes para evitar trabalho duplicado e manter uma arquitetura coerente.
-
-## Próximos passos
-
-- [ ] Definir requisitos iniciais.
-- [ ] Testar hardware Meshtastic.
-- [ ] Testar uma rede local.
-- [ ] Estudar o papel do gateway.
-- [ ] Definir a primeira arquitetura MQTT.
-- [ ] Criar documentação técnica.
-- [ ] Realizar testes de disponibilidade e recuperação.
-- [ ] Avaliar expansão para outras regiões.
-
----
-
-**Meshtastic MQTT Brasil**  
-Infraestrutura comunitária em planejamento para integração de redes Meshtastic no Brasil.
+Esta branch ainda não representa a arquitetura final do DevNux Mesh Brasil. Ela existe para reproduzir e testar o comportamento do projeto de referência.
