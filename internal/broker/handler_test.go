@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"testing"
 
-meshtastic "github.com/kmpm/meshtastic-protobufs.go/v2/generated"
+	meshtastic "github.com/kmpm/meshtastic-protobufs.go/v2/generated"
 	mqtt "github.com/mochi-mqtt/server/v2"
 	"github.com/mochi-mqtt/server/v2/packets"
 	"google.golang.org/protobuf/proto"
