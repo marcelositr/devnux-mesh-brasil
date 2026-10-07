@@ -1,101 +1,106 @@
-# Meshtastic MQTT Brasil
+# DevNux Mesh Brasil
 
-Infraestrutura MQTT comunitária para integração e comunicação entre redes Meshtastic no Brasil, com foco em uso público, colaboração e continuidade da comunidade.
+[![CI](https://github.com/marcelositr/devnux-mesh-brasil/actions/workflows/ci.yml/badge.svg)](https://github.com/marcelositr/devnux-mesh-brasil/actions/workflows/ci.yml)
 
-## Status
+Broker MQTT para integração de redes Meshtastic.
 
-**Em planejamento.**
+O **DevNux Mesh Brasil** é um projeto de infraestrutura de código aberto voltado ao recebimento e processamento de mensagens Meshtastic por MQTT. O projeto implementa o transporte MQTT sobre TLS, valida envelopes protobuf, descriptografa pacotes Meshtastic e registra os dados processados.
 
-Este repositório é o ponto de partida para documentar, desenvolver e acompanhar uma futura infraestrutura MQTT voltada ao ecossistema Meshtastic no Brasil.
+## Estado atual
 
-## Objetivo
+O projeto está em desenvolvimento e validação técnica. O núcleo atual está coberto por testes automatizados e foi validado com `go test`, `go vet` e compilação do broker.
 
-Estudar e, futuramente, desenvolver uma infraestrutura que permita interligar diferentes redes e regiões Meshtastic por meio de MQTT, sem substituir o funcionamento local das redes LoRa.
+O escopo atual é deliberadamente pequeno: o objetivo é manter um broker funcional, compreensível e fácil de evoluir sem introduzir abstrações desnecessárias.
 
-A ideia é que a comunicação local continue funcionando mesmo quando a conexão com a infraestrutura MQTT ou com a Internet estiver indisponível.
+## O que o broker faz
 
-## Princípios
+- inicia um broker MQTT sobre TLS;
+- aceita conexões e inscrições MQTT;
+- recebe `ServiceEnvelope` codificados em protobuf;
+- valida os campos necessários para o processamento;
+- descriptografa pacotes Meshtastic com AES-CTR;
+- interpreta o conteúdo descriptografado como `Data`;
+- registra mensagens de texto e outros portnums reconhecidos pelo fluxo atual;
+- encerra o processo de forma controlada por SIGINT ou SIGTERM.
 
-- Projeto voltado à comunidade.
-- Código e conhecimento devem permanecer acessíveis à comunidade conforme os termos da licença.
-- A infraestrutura deve complementar as redes locais, não depender delas para funcionar.
-- Prioridade para continuidade, simplicidade e funcionamento em situações reais.
-- Desenvolvimento colaborativo e documentado.
-- Respeito à origem e ao histórico do projeto.
+A arquitetura e o fluxo interno estão descritos em [Arquitetura](docs/arquitetura.md).
 
-## Possível arquitetura
+## Configuração
 
-```text
-              NÚCLEO MQTT
-                    │
-        ┌───────────┴───────────┐
-        │                       │
-     Região A                Região B
-        │                       │
-     Gateway                 Gateway
-        │                       │
-       LoRa                    LoRa
-        │                       │
-    Rede local             Rede local
-        │                       │
-    Dispositivos            Dispositivos
-```
+Valores padrão:
 
-A arquitetura definitiva ainda não está definida. Ela deverá ser construída a partir de testes com hardware real, redes Meshtastic reais e gateways funcionando em condições práticas.
+| Configuração | Padrão |
+|---|---|
+| Endereço MQTT | `:8883` |
+| Certificado TLS | `certificate.pem` |
+| Chave privada TLS | `private.key` |
+| PSK padrão | `d4f1bb3a20290759f0bcffabcf4e6901` |
+
+Variáveis de ambiente:
+
+- `MQTT_LISTEN_ADDRESS`
+- `MQTT_CERTIFICATE_FILE`
+- `MQTT_PRIVATE_KEY_FILE`
+- `MESHTASTIC_DEFAULT_PSK`
+
+A PSK fornecida por ambiente deve ser hexadecimal e resultar em 16 ou 32 bytes.
+
+Os detalhes estão em [Configuração e execução](docs/configuracao.md).
+
+## TLS
+
+O listener utiliza TLS 1.2 como versão mínima e recebe certificado e chave privada de arquivos separados.
+
+A configuração de TLS, os requisitos de execução e os cuidados operacionais estão documentados em [Configuração e execução](docs/configuracao.md).
+
+## Protocolo e criptografia
+
+O processamento utiliza os tipos protobuf do ecossistema Meshtastic e AES-CTR para a descriptografia dos pacotes.
+
+As regras de validação, construção do nonce, uso da PSK e comportamento do processamento estão em [Protocolo e criptografia](docs/protocolo.md).
 
 ## Desenvolvimento
 
-O desenvolvimento deverá seguir uma evolução gradual:
+Para trabalhar no projeto:
 
-1. Conhecer e testar o Meshtastic em hardware real.
-2. Construir e observar redes locais.
-3. Testar gateways.
-4. Estudar a integração com MQTT.
-5. Testar a comunicação entre regiões.
-6. Avaliar disponibilidade, segurança e continuidade.
-7. Documentar os resultados.
-8. Somente então considerar uma infraestrutura de maior escala.
+```bash
+go test ./...
+go vet ./...
+go build ./cmd/broker
+```
 
-## Situação atual
+As responsabilidades dos pacotes, fluxo de execução e critérios para alterações estão em [Guia de desenvolvimento](docs/desenvolvimento.md).
 
-Nenhuma infraestrutura nacional está sendo implantada neste momento.
+## Uso de IA
 
-Este repositório existe para preservar a ideia, organizar o planejamento e servir como base para um possível desenvolvimento futuro.
+Ferramentas de IA podem ser utilizadas como apoio ao desenvolvimento, revisão, investigação e documentação. Elas não substituem a responsabilidade humana pelas decisões do projeto, pela validação do código ou pela verificação de resultados.
 
-## Licença
+As regras adotadas pelo projeto estão em [Uso de IA](docs/uso-de-ia.md).
 
-Este projeto utiliza a **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+## Limites atuais
 
-A licença permite uso, estudo, modificação e distribuição do projeto, inclusive para fins comerciais, desde que sejam respeitadas as condições da AGPL-3.0, incluindo as obrigações relacionadas à disponibilização do código-fonte correspondente em versões modificadas oferecidas como serviço pela rede.
+Ainda não fazem parte do núcleo atual:
 
-Consulte o arquivo [`LICENSE`](LICENSE) para os termos completos.
+- autenticação MQTT;
+- ACL ou autorização por tópico;
+- rate limiting;
+- deduplicação;
+- persistência;
+- seleção de PSK por `channel_id`;
+- filtragem avançada de portnums;
+- observabilidade avançada;
+- mecanismos de banimento ou moderação.
 
-## Autoria e origem
+Esses limites são intencionais nesta etapa e não devem ser confundidos com funcionalidades já implementadas.
 
-Projeto iniciado por **marcelositr**.
+## Documentação
 
-O histórico público deste repositório faz parte da documentação da origem e da evolução do projeto. Contribuições posteriores devem respeitar a licença e preservar os avisos de autoria e licença aplicáveis.
+A documentação foi separada por responsabilidade para evitar duplicação:
 
-Eventuais registros formais de versões do software junto ao INPI poderão ser realizados conforme a evolução do projeto.
+- [Arquitetura](docs/arquitetura.md) — organização interna e fluxo do broker.
+- [Protocolo e criptografia](docs/protocolo.md) — envelope, validação, nonce, AES-CTR e PSK.
+- [Configuração e execução](docs/configuracao.md) — ambiente, TLS, execução e testes.
+- [Guia de desenvolvimento](docs/desenvolvimento.md) — manutenção, mudanças e validação.
+- [Uso de IA](docs/uso-de-ia.md) — regras para uso responsável de ferramentas de IA no desenvolvimento.
 
-## Contribuições
-
-Contribuições, testes, documentação, sugestões e implementações poderão ser incorporados ao projeto conforme sua evolução.
-
-Antes de iniciar uma implementação de grande porte, consulte as discussões e a documentação existentes para evitar trabalho duplicado e manter uma arquitetura coerente.
-
-## Próximos passos
-
-- [ ] Definir requisitos iniciais.
-- [ ] Testar hardware Meshtastic.
-- [ ] Testar uma rede local.
-- [ ] Estudar o papel do gateway.
-- [ ] Definir a primeira arquitetura MQTT.
-- [ ] Criar documentação técnica.
-- [ ] Realizar testes de disponibilidade e recuperação.
-- [ ] Avaliar expansão para outras regiões.
-
----
-
-**Meshtastic MQTT Brasil**  
-Infraestrutura comunitária em planejamento para integração de redes Meshtastic no Brasil.
+Cada documento trata apenas do seu próprio assunto e aponta para os demais quando necessário.

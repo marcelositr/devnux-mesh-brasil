@@ -1,71 +1,93 @@
-# Regras para uso de IA no projeto
+# Uso de Inteligência Artificial no desenvolvimento
 
-Este projeto pode utilizar ferramentas de Inteligência Artificial como apoio ao desenvolvimento. A IA é uma ferramenta de trabalho e não possui autoridade para definir sozinha o rumo do projeto.
+## Objetivo
 
-## Regra principal
+Registrar como ferramentas de Inteligência Artificial podem participar do desenvolvimento do DevNux Mesh Brasil sem transferir para a ferramenta a responsabilidade pelo projeto.
 
-**Nenhuma IA deve alterar, remover, substituir ou ampliar a arquitetura, os princípios ou o objetivo do projeto por iniciativa própria.**
+Este documento trata do processo de desenvolvimento. As decisões de arquitetura, protocolo e operação continuam documentadas nos arquivos específicos:
 
-Antes de uma mudança relevante, a pessoa responsável pelo projeto deve entender a proposta e decidir se ela será incorporada.
+- [Arquitetura](arquitetura.md);
+- [Protocolo e criptografia](protocolo.md);
+- [Configuração e execução](configuracao.md);
+- [Guia de desenvolvimento](desenvolvimento.md).
 
-## Regras obrigatórias
+## Papel da IA
 
-1. **Não avacalhar a arquitetura**
-   - Não criar abstrações desnecessárias.
-   - Não introduzir frameworks ou dependências apenas porque são convenientes.
-   - Não reescrever partes funcionais sem necessidade comprovada.
-   - Não criar funcionalidades que não tenham relação com o objetivo do projeto.
+Ferramentas de IA podem ser usadas para:
 
-2. **Preservar o que já foi decidido**
-   - Consultar README, documentação e decisões anteriores antes de propor alterações.
-   - Não contradizer uma decisão documentada sem explicar o motivo.
-   - Quando houver conflito entre uma solicitação nova e uma decisão anterior, apontar o conflito antes de alterar o projeto.
+- analisar código;
+- propor implementações;
+- auxiliar na investigação de problemas;
+- sugerir testes;
+- revisar documentação;
+- explicar APIs, protocolos e conceitos;
+- executar tarefas repetitivas quando houver ferramentas apropriadas.
 
-3. **Não inventar**
-   - Não afirmar que algo foi testado quando não foi.
-   - Não inventar resultados de testes, requisitos, APIs, protocolos ou comportamento de hardware.
-   - Quando houver incerteza, declarar a incerteza e propor uma forma de verificar.
+A IA é uma ferramenta de apoio. Ela não é autoridade sobre requisitos, arquitetura, segurança ou comportamento do projeto.
 
-4. **Mudanças pequenas e verificáveis**
-   - Preferir alterações incrementais.
-   - Cada mudança deve ter objetivo identificável.
-   - Código novo deve ser acompanhado, quando aplicável, de testes ou de uma explicação de como será validado.
-   - Evitar mudanças gigantes que misturem várias decisões diferentes.
+## Responsabilidade humana
 
-5. **Não apagar histórico**
-   - Não remover documentação, decisões ou autoria para simplificar o projeto.
-   - Não reescrever o histórico do projeto para ocultar sua origem.
-   - Alterações importantes devem permanecer rastreáveis no Git.
+Toda alteração relevante deve ser entendida e validada por uma pessoa responsável pelo projeto.
 
-6. **Respeitar a licença**
-   - O projeto é distribuído sob AGPL-3.0.
-   - Código incorporado ao projeto deve ter licença compatível e origem verificável.
-   - Não adicionar código de terceiros sem verificar sua licença e compatibilidade.
-   - Não transformar componentes cobertos pela AGPL em componentes proprietários por simples conveniência.
+A aprovação humana não significa confiar cegamente no resultado gerado. Significa verificar:
 
-7. **Autoria e origem**
-   - O uso de IA não altera a autoria humana registrada no projeto.
-   - Ferramentas de IA não devem ser apresentadas como autoras do projeto.
-   - Contribuições humanas e decisões relevantes devem continuar identificáveis no histórico quando apropriado.
+- se a alteração atende ao requisito;
+- se preserva decisões existentes;
+- se não introduz comportamento não solicitado;
+- se não cria dependências ou abstrações desnecessárias;
+- se respeita licenças e direitos de terceiros;
+- se os testes realmente cobrem o comportamento alterado.
 
-8. **Segurança e infraestrutura**
-   - Não introduzir credenciais, chaves privadas, tokens ou dados pessoais no repositório.
-   - Não abrir portas, serviços ou integrações externas sem necessidade documentada.
-   - Mudanças que possam afetar disponibilidade, segurança ou privacidade devem ser tratadas como mudanças de alto impacto.
+## Regras para geração e alteração de código
 
-## Antes de implementar
+A IA não deve:
 
-Uma IA trabalhando neste projeto deve, quando a tarefa tiver impacto relevante:
+- inventar requisitos;
+- inventar resultados de testes;
+- afirmar que executou uma ferramenta quando não executou;
+- alterar o protocolo sem solicitação;
+- substituir uma implementação funcional por outra apenas por preferência;
+- introduzir arquitetura genérica sem necessidade;
+- adicionar dependências sem justificar a necessidade;
+- remover validações ou testes para fazer uma suíte passar;
+- inserir credenciais, chaves privadas, tokens ou dados sensíveis no repositório.
 
-1. ler a documentação relacionada;
-2. identificar as decisões existentes;
-3. explicar o que pretende mudar;
-4. apontar impactos e riscos;
-5. implementar somente o necessário;
-6. informar o que foi testado e o que não foi testado.
+Quando houver incerteza, a incerteza deve ser explicitada e a informação deve ser verificada antes de transformar a hipótese em código.
 
-## Princípio do projeto
+## Alterações incrementais
 
-> **A IA deve ajudar a construir o projeto, não decidir o que o projeto deve se tornar.**
+Prefira o seguinte ciclo:
 
-O objetivo é permitir colaboração com pessoas e ferramentas diferentes sem perder coerência, rastreabilidade, simplicidade ou a finalidade comunitária do projeto.
+1. entender o estado atual;
+2. definir a mudança;
+3. alterar uma responsabilidade por vez;
+4. executar os testes;
+5. revisar o diff;
+6. registrar a mudança no Git;
+7. somente então avançar.
+
+Mudanças grandes devem ser divididas quando isso reduzir risco ou facilitar a revisão.
+
+## Código de terceiros
+
+Antes de incorporar código, documentação ou outro material de terceiros, verifique sua origem, licença e compatibilidade com a licença do projeto.
+
+Não atribua autoria humana ou institucional que não possa ser comprovada.
+
+## Autoria
+
+O uso de IA durante o desenvolvimento não transforma a ferramenta em autora do projeto.
+
+A autoria e a responsabilidade pelo software permanecem vinculadas às pessoas que definem, revisam, integram e mantêm o projeto.
+
+O histórico Git deve continuar sendo a fonte de rastreabilidade das alterações realizadas.
+
+## Verificação
+
+Uma resposta ou implementação produzida com auxílio de IA não é considerada validada apenas por ter sido gerada.
+
+Para código, a validação deve seguir [Guia de desenvolvimento](desenvolvimento.md), incluindo testes, análise estática, compilação e revisão do diff quando aplicável.
+
+## Princípio
+
+> IA pode acelerar o trabalho de desenvolvimento; não pode substituir a verificação do trabalho de desenvolvimento.
