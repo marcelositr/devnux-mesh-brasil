@@ -32,7 +32,7 @@ O README do projeto de referência também contém ideias futuras que não fazem
 
 A compatibilidade criptográfica deve ser validada com um pacote real produzido pelo Meshtastic ou com vetores de teste confiáveis.
 
-O projeto de referência usa NonceGenerator da biblioteca Meshtastic para construir o nonce. A implementação Go inicial reproduz a estrutura de 16 bytes usada pelo AES-CTR, mas deve ser confirmada por teste de interoperabilidade antes de ser considerada concluída.
+O projeto de referência usa NonceGenerator da biblioteca Meshtastic para construir o nonce. A implementação Go reproduz a estrutura de 16 bytes usada pelo AES-CTR, confirmada pelo vetor de interoperabilidade C# e pelos testes automatizados de criptografia.
 
 ## Fora do escopo atual
 
@@ -47,3 +47,10 @@ As seguintes ideias aparecem no README de referência, mas não estão implement
 - filtragem de portnums;
 - fail2ban;
 - banimento de atores.
+
+
+## Tópicos MQTT
+
+O projeto de referência não aplica filtragem ou validação específica sobre o nome do tópico no interceptor de publicação. O broker Go mantém o mesmo comportamento: o tópico é aceito e utilizado apenas no registro da mensagem.
+
+Também não foi introduzida seleção de PSK por `channel_id`. O projeto de referência usa diretamente a PSK padrão na descriptografia, portanto esta reprodução mantém a mesma semântica.

@@ -43,7 +43,7 @@ Por padrão:
 - MQTT TLS: :8883
 - certificado: certificate.pem
 - chave privada: private.key
-- PSK padrão Meshtastic: meshtastic_ota_default_psk_v1!!!
+- PSK padrão Meshtastic: `d4f1bb3a20290759f0bcffabcf4e6901` (16 bytes)
 
 As configurações podem ser alteradas por variáveis de ambiente.
 
