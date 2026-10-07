@@ -1,7 +1,6 @@
 package broker
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -17,12 +16,14 @@ import (
 	"github.com/marcelositr/devnux-mesh-brasil/internal/crypto"
 )
 
+// Handler integra o ciclo de vida MQTT com o processamento dos pacotes Meshtastic.
 type Handler struct {
 	mqtt.HookBase
 	logger *slog.Logger
 	config config.Config
 }
 
+// NewHandler cria o hook responsável pelo processamento de mensagens MQTT.
 func NewHandler(logger *slog.Logger, cfg config.Config) *Handler {
 	return &Handler{logger: logger, config: cfg}
 }
@@ -31,38 +32,44 @@ func (h *Handler) ID() string {
 	return "meshtastic-packet-handler"
 }
 
+// Provides limita o hook aos eventos MQTT que fazem parte do processamento do broker.
 func (h *Handler) Provides(event byte) bool {
-	return bytes.Contains([]byte{
-		mqtt.OnConnect,
-		mqtt.OnSubscribe,
-		mqtt.OnPublish,
-	}, []byte{event})
+	switch event {
+	case mqtt.OnConnect, mqtt.OnSubscribe, mqtt.OnPublish:
+		return true
+	default:
+		return false
+	}
 }
 
 func (h *Handler) Init(any) error {
 	return nil
 }
 
+// OnConnect registra a conexão aceita pelo broker sem aplicar autenticação adicional.
 func (h *Handler) OnConnect(client *mqtt.Client, _ packets.Packet) error {
 	// O projeto de referência permite a conexão sem autenticação adicional.
 	h.logger.Debug("cliente conectado", "client_id", client.ID)
 	return nil
 }
 
+// OnSubscribe registra a inscrição e preserva os filtros recebidos pelo cliente.
 func (h *Handler) OnSubscribe(client *mqtt.Client, packet packets.Packet) packets.Packet {
 	// O projeto de referência permite todas as inscrições.
 	h.logger.Debug("inscrição MQTT recebida", "client_id", client.ID, "filters", packet.Filters)
 	return packet
 }
 
+// OnPublish valida e interpreta o envelope Meshtastic antes de permitir a publicação.
+// O pacote original é preservado para que o broker MQTT continue seu fluxo normal.
 func (h *Handler) OnPublish(client *mqtt.Client, packet packets.Packet) (packets.Packet, error) {
 	if len(packet.Payload) == 0 {
 		h.logger.Warn("payload vazio recebido", "topic", packet.TopicName, "client_id", client.ID)
 		return packet, packets.CodeSuccessIgnore
 	}
 
-	var envelope meshtastic.ServiceEnvelope
-	if err := proto.Unmarshal(packet.Payload, &envelope); err != nil {
+	envelope, err := parseServiceEnvelope(packet.Payload)
+	if err != nil {
 		h.logger.Warn("falha ao decodificar protobuf", "topic", packet.TopicName, "client_id", client.ID)
 		return packet, packets.CodeSuccessIgnore
 	}
@@ -82,6 +89,16 @@ func (h *Handler) OnPublish(client *mqtt.Client, packet packets.Packet) (packets
 	return packet, nil
 }
 
+// parseServiceEnvelope converte o payload MQTT no envelope protobuf usado pelo protocolo.
+func parseServiceEnvelope(payload []byte) (*meshtastic.ServiceEnvelope, error) {
+	var envelope meshtastic.ServiceEnvelope
+	if err := proto.Unmarshal(payload, &envelope); err != nil {
+		return nil, err
+	}
+	return &envelope, nil
+}
+
+// validateServiceEnvelope verifica os campos mínimos necessários para processar um pacote.
 func validateServiceEnvelope(envelope *meshtastic.ServiceEnvelope) error {
 	if envelope == nil {
 		return errors.New("service envelope nulo")
@@ -113,6 +130,7 @@ func validateServiceEnvelope(envelope *meshtastic.ServiceEnvelope) error {
 	return nil
 }
 
+// decryptMeshPacket descriptografa o pacote e interpreta o conteúdo como Data.
 func (h *Handler) decryptMeshPacket(envelope *meshtastic.ServiceEnvelope) (*meshtastic.Data, error) {
 	packet := envelope.GetPacket()
 	nonce := crypto.NewNonce(packet.GetFrom(), packet.GetId())
@@ -134,6 +152,7 @@ func (h *Handler) decryptMeshPacket(envelope *meshtastic.ServiceEnvelope) (*mesh
 	return &data, nil
 }
 
+// logReceivedMessage registra mensagens de texto separadamente dos demais portnums.
 func (h *Handler) logReceivedMessage(topic, clientID string, data *meshtastic.Data) {
 	if data != nil && int32(data.GetPortnum()) == 1 {
 		h.logger.Info("mensagem de texto recebida", "topic", topic, "client_id", clientID, "message", string(data.GetPayload()))
