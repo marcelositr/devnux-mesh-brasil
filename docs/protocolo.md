@@ -34,7 +34,7 @@ A chave aceita pelo núcleo criptográfico possui 16 ou 32 bytes, correspondendo
 
 A PSK padrão do projeto é:
 
-```
+```text
 d4 f1 bb 3a 20 29 07 59 f0 bc ff ab cf 4e 69 01
 ```
 
@@ -54,18 +54,26 @@ O resultado é interpretado como `meshtastic.Data`.
 
 O fluxo atual consegue registrar mensagens de texto e outros portnums conforme os dados presentes. Pacotes que não produzam os dados necessários para um registro textual não devem ser confundidos com falhas do broker.
 
+## MQTT, hops e repetições
+
+O hop limit do Meshtastic limita quantos encaminhamentos um pacote pode realizar na malha de rádios. Isso não determina quantas publicações MQTT o broker deve receber. Uma contagem de logs repetidos, isoladamente, não prova que sejam cópias do mesmo pacote nem que a causa seja o hop limit.
+
+Para investigar repetições, é necessário comparar identificadores e campos do protocolo e observar o tráfego em uma malha com mais de um nó. O broker não implementa deduplicação nesta etapa; não adicionar essa regra sem evidência de um problema concreto e sem critérios compatíveis com o comportamento real da rede.
+
+A configuração MQTT do Meshtastic também define quais canais fazem uplink para o servidor e quais recebem downlink. Consulte a [documentação oficial do módulo MQTT](https://meshtastic.org/docs/configuration/module/mqtt/) para a semântica das opções do rádio.
+
 ## Compatibilidade e validação
 
 O núcleo criptográfico possui teste de interoperabilidade baseado em vetor conhecido. A validação automatizada deve ser executada antes de alterações no protocolo ou na criptografia.
 
-A validação com hardware Meshtastic físico e real ainda é uma etapa pendente. Qualquer decisão futura que altere filtragem, autorização ou controle de tráfego deve considerar o comportamento observado nessa etapa.
+Um teste físico inicial confirmou conexão MQTT/TLS de um rádio, recebimento e processamento de pacotes e chegada de mensagens após a reconexão do Wi-Fi. Ainda não foi validada uma malha física com múltiplos nós, nem foram concluídas as verificações de encaminhamento e downlink nessa topologia. Os resultados detalhados estão em [Validação](validacao.md).
 
-Os comandos de validação estão em [Guia de desenvolvimento](desenvolvimento.md).
+Qualquer decisão futura que altere filtragem, autorização ou controle de tráfego deve considerar o comportamento observado em hardware real.
 
 ## Limites
 
 A implementação atual utiliza uma única PSK padrão para o broker. Não existe seleção automática de PSK por `channel_id`.
 
-Também não há, nesta etapa, filtragem avançada de tópicos ou portnums.
+Também não há, nesta etapa, filtragem avançada de tópicos ou portnums nem deduplicação no broker.
 
 Possíveis evoluções de hardening estão documentadas separadamente em [Evolução futura e hardening](evolucao.md) e não constituem requisitos da implementação atual.

@@ -8,9 +8,9 @@ O **DevNux Mesh Brasil** é um projeto de infraestrutura de código aberto volta
 
 ## Estado atual
 
-O projeto está em desenvolvimento e validação técnica. O núcleo atual está coberto por testes automatizados e foi validado com `go test`, `go vet` e compilação do broker.
+O projeto está em desenvolvimento e validação técnica. O núcleo atual possui testes automatizados e foi validado anteriormente com `go test`, `go vet`, compilação do broker e execução em Docker.
 
-A validação em host e Docker já confirmou o fluxo principal com payloads Meshtastic produzidos em ambiente de teste. **A validação com hardware Meshtastic físico e real ainda é uma etapa pendente.**
+A validação inicial com hardware físico também começou: um Heltec Wi-Fi LoRa 32 V4 conectou ao broker por MQTT/TLS, enviou mensagens que foram processadas e registradas, e voltou a transmitir após a reconexão do Wi-Fi. **A validação de uma malha Meshtastic real com múltiplos nós ainda está pendente.** Os resultados e limites observados estão em [Validação](docs/validacao.md).
 
 O escopo atual é deliberadamente pequeno: o objetivo é manter um broker funcional, compreensível e fácil de evoluir sem introduzir abstrações desnecessárias.
 
@@ -65,11 +65,11 @@ A imagem publicada pelo GitHub Actions fica disponível no GitHub Container Regi
 docker pull ghcr.io/marcelositr/devnux-mesh-brasil:latest
 ```
 
-Para executar com TLS, monte um diretório contendo `certificate.pem` e `private.key`:
+Para executar localmente com TLS, monte um diretório contendo `certificate.pem` e `private.key`. O exemplo abaixo limita a porta publicada ao próprio host:
 
 ```bash
 docker run --rm \
-  -p 8883:8883 \
+  -p 127.0.0.1:8883:8883 \
   -v "$PWD/certs:/etc/devnux/certs:ro" \
   ghcr.io/marcelositr/devnux-mesh-brasil:latest
 ```
@@ -81,13 +81,15 @@ A imagem utiliza:
 - `:8883` como endereço MQTT padrão;
 - `MESHTASTIC_DEFAULT_PSK` para substituir a PSK padrão quando necessário.
 
-O certificado e a chave privada não fazem parte da imagem nem do repositório.
+O certificado e a chave privada não fazem parte da imagem nem do repositório. O diretório local `certs/` e arquivos de certificados/chaves são ignorados pelo Git.
 
 As imagens da branch `main` recebem a tag `latest`. Releases Git com tags no formato `vX.Y.Z` também geram tags de versão no GHCR.
 
+**Segurança:** o broker não possui autenticação MQTT nem ACL nesta etapa. Não publique a porta em interfaces de rede não confiáveis. Para testes com um rádio na rede local, publique a porta explicitamente no endereço privado do host e mantenha o acesso restrito.
+
 ## TLS
 
-O listener utiliza TLS 1.2 como versão mínima e recebe certificado e chave privada de arquivos separados.
+O listener utiliza TLS 1.2 como versão mínima e recebe certificado e chave privada de arquivos separados. TLS protege o transporte, mas a identidade do servidor só é validada quando o cliente verifica o certificado. O teste inicial com o rádio usou certificado autoassinado e configuração de cliente que não valida o certificado; isso não deve ser considerado validação completa da identidade do servidor.
 
 A configuração de TLS, os requisitos de execução e os cuidados operacionais estão documentados em [Configuração e execução](docs/configuracao.md).
 
@@ -122,14 +124,14 @@ Ainda não fazem parte do núcleo atual:
 - autenticação MQTT;
 - ACL ou autorização por tópico;
 - rate limiting;
-- deduplicação;
+- deduplicação no broker;
 - persistência;
 - seleção de PSK por `channel_id`;
 - filtragem avançada de portnums;
 - observabilidade avançada;
 - mecanismos de banimento ou moderação.
 
-Esses limites são intencionais nesta etapa. As possibilidades de evolução foram registradas em [Evolução futura e hardening](docs/evolucao.md) e **não devem ser tratadas como requisitos de implementação antes da validação com hardware Meshtastic físico e real**.
+Esses limites são intencionais nesta etapa. As possibilidades de evolução foram registradas em [Evolução futura e hardening](docs/evolucao.md) e **não devem ser tratadas como requisitos de implementação antes de concluir a validação com hardware Meshtastic físico e real**.
 
 ## Documentação
 
@@ -139,7 +141,7 @@ A documentação foi separada por responsabilidade para evitar duplicação:
 - [Protocolo e criptografia](docs/protocolo.md) — envelope, validação, nonce, AES-CTR e PSK.
 - [Configuração e execução](docs/configuracao.md) — ambiente, TLS, execução e testes.
 - [Guia de desenvolvimento](docs/desenvolvimento.md) — manutenção, mudanças e validação.
-- [Validação](docs/validacao.md) — validações funcionais e limites conhecidos.
+- [Validação](docs/validacao.md) — validações funcionais, resultados com hardware e limites conhecidos.
 - [Evolução futura e hardening](docs/evolucao.md) — possibilidades futuras e critérios para avaliá-las.
 - [Uso de IA](docs/uso-de-ia.md) — regras para uso responsável de ferramentas de IA no desenvolvimento.
 
