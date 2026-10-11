@@ -2,90 +2,39 @@
 
 ## Objetivo
 
-Este documento descreve como o código está organizado e como uma publicação MQTT percorre o broker.
-
-Detalhes de protocolo e criptografia ficam em [Protocolo e criptografia](protocolo.md). Configuração e operação ficam em [Configuração e execução](configuracao.md). Regras de manutenção ficam em [Guia de desenvolvimento](desenvolvimento.md).
+Este documento descreve a organização do código e o fluxo de uma publicação MQTT. O modelo de protocolo está em [Protocolo e criptografia](protocolo.md), a operação em [Configuração](configuracao.md), o processo de manutenção em [Guia de desenvolvimento](desenvolvimento.md) e os resultados físicos em [Equipamentos e ensaios](equipamentos.md) e [Validação](validacao.md).
 
 ## Organização
 
-```
-cmd/broker/
-    main.go
-
-internal/
-    broker/
-        handler.go
-        packet_processor.go
-    config/
-        config.go
-    crypto/
-        crypto.go
-```
-
-### `cmd/broker`
-
-Responsável pela composição da aplicação:
-
-- cria o logger;
-- carrega a configuração;
-- cria o broker MQTT;
-- registra hooks;
-- configura TLS;
-- inicia o servidor;
-- trata o encerramento do processo.
-
-O pacote principal não contém regras do protocolo Meshtastic.
-
-### `internal/broker`
-
-Contém a integração entre MQTT e o processamento Meshtastic.
-
-`handler.go` atua como adaptador dos eventos MQTT.
-
-`packet_processor.go` concentra o processamento do payload Meshtastic: parsing, validação e descriptografia.
-
-### `internal/config`
-
-Carrega configurações do ambiente, aplica valores padrão e valida a PSK fornecida por variável de ambiente.
-
-### `internal/crypto`
-
-Contém a implementação criptográfica necessária ao processamento atual, incluindo a PSK padrão, construção do nonce e transformação AES-CTR.
+- cmd/broker: composição da aplicação, configuração, logger, servidor MQTT, TLS e encerramento.
+- internal/broker: integração com eventos MQTT e processamento das publicações Meshtastic.
+- internal/config: carregamento e validação da configuração.
+- internal/crypto: nonce e transformação AES-CTR utilizados no processamento atual.
 
 ## Fluxo de uma publicação
 
-1. O cliente estabelece uma conexão MQTT sobre TLS.
+1. O cliente estabelece conexão MQTT sobre TLS.
 2. O broker recebe uma publicação.
 3. O hook MQTT entrega o payload ao processador.
-4. O processador interpreta o payload como `ServiceEnvelope`.
+4. O payload é interpretado como ServiceEnvelope protobuf.
 5. O envelope é validado.
-6. O pacote criptografado é descriptografado.
-7. O resultado é interpretado como `Data`.
+6. O pacote é descriptografado usando a PSK configurada.
+7. O resultado é interpretado como Data protobuf.
 8. O fluxo registra os dados relevantes.
-9. Erros de parsing, validação ou descriptografia interrompem o processamento daquela publicação sem derrubar o broker.
+9. Erros de parsing, validação ou descriptografia interrompem o processamento daquela publicação.
+
+## Limite importante
+
+O hook atual tenta processar cada publicação como um envelope Meshtastic e usa uma PSK configurada. Publicações que não correspondam ao formato esperado ou não possam ser descriptografadas são ignoradas. Portanto, a implementação atual não deve ser descrita como encaminhador MQTT opaco e universal para quaisquer canais ou PSKs.
+
+O transporte TLS protege a conexão, mas não fornece por si só autenticação MQTT de clientes nem autorização por tópico. A configuração atual não implementa esses controles.
 
 ## Princípio arquitetural
 
-O projeto evita camadas artificiais. Uma responsabilidade deve ser separada quando a separação melhora a compreensão ou permite testar uma regra isoladamente.
-
-Não são necessários, no estado atual:
-
-- interfaces para cada componente;
-- camada de repositório;
-- service layer genérica;
-- container de injeção de dependência;
-- event bus;
-- abstrações sobre MQTT ou TLS sem necessidade concreta.
-
-Qualquer mudança estrutural deve preservar o comportamento validado e ser justificada pelo novo requisito.
+Evitar camadas artificiais. Separar responsabilidades quando isso melhora a compreensão ou permite testar uma regra isoladamente. Não adicionar interfaces genéricas, camada de repositório, service layer, injeção de dependência ou event bus sem necessidade demonstrada.
 
 ## Testes
 
-Os testes acompanham as responsabilidades:
+Os testes unitários cobrem responsabilidades do hook, processador, configuração e criptografia. A cobertura descrita nos testes não substitui uma execução MQTT com dois clientes conectados nem um ensaio físico com dois ou mais rádios. Consulte [Validação](validacao.md) para o estado documentado e [Equipamentos e ensaios](equipamentos.md) para a matriz de hardware.
 
-- `internal/broker/handler_test.go` testa a integração do hook MQTT;
-- `internal/broker/packet_processor_test.go` testa o processamento Meshtastic;
-- `internal/config/config_test.go` testa carregamento e validação da configuração;
-- `internal/crypto/crypto_test.go` testa nonce, chaves e interoperabilidade criptográfica.
-
-A validação completa está descrita em [Guia de desenvolvimento](desenvolvimento.md).
+Qualquer mudança estrutural deve preservar o comportamento validado e ser justificada pelo requisito novo.
