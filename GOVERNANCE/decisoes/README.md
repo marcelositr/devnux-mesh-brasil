@@ -4,11 +4,11 @@ Este diretório preserva decisões explícitas que afetam arquitetura, seguranç
 
 ## Convenção
 
-Cada decisão deve incluir identificador, título, estado, contexto, decisão, consequências e evidências. Estados sugeridos: **proposta**, **aceita**, **substituída** ou **rejeitada**. Uma proposta não deve ser descrita como decisão aprovada.
+Cada decisão deve incluir estado, contexto, decisão, consequências e evidências. Estados sugeridos: proposta, aceita, substituída ou rejeitada. Uma proposta não deve ser descrita como decisão aprovada.
 
 ## Decisões registradas
 
-- [ADR-0001: validar com hardware antes de ampliar o escopo](ADR-0001-validacao-hardware.md)
-- [ADR-0002: manter o broker em rede controlada enquanto faltam controles de acesso](ADR-0002-acesso-rede-controlada.md)
+- [Decisão 01: validar antes de ampliar o escopo](decisao-01.md)
+- [Decisão 02: manter o broker em rede controlada](decisao-02-acesso-rede.md)
 
 Novas decisões devem ser adicionadas aqui e relacionadas aos documentos técnicos afetados.
