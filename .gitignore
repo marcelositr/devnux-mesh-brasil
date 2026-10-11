@@ -1,0 +1,14 @@
+# Certificados TLS e chaves privadas locais
+/certs/
+*.pem
+*.key
+*.crt
+
+# Arquivos locais de ambiente
+.env
+.env.*
+!.env.example
+
+# Binários gerados localmente
+/devnux-mesh-broker
+/broker
