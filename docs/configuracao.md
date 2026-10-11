@@ -22,7 +22,9 @@ O certificado e a chave privada são carregados por:
 - `MQTT_CERTIFICATE_FILE`;
 - `MQTT_PRIVATE_KEY_FILE`.
 
-A chave privada nunca deve ser adicionada ao repositório.
+A chave privada nunca deve ser adicionada ao repositório. O arquivo `.gitignore` ignora o diretório local `certs/` e arquivos de certificados/chaves comuns.
+
+TLS cifra o transporte entre cliente e broker, mas a autenticação do servidor depende de o cliente validar o certificado apresentado. Um teste com certificado autoassinado e validação de certificado desabilitada confirma a negociação TLS, mas não comprova a identidade do servidor. Para ambientes além de testes locais, configure uma cadeia de confiança adequada e verifique que o cliente valida o certificado.
 
 ## Execução
 
@@ -78,11 +80,11 @@ certs/
 └── private.key
 ```
 
-Execução da imagem publicada:
+Execução da imagem publicada, limitada ao próprio host:
 
 ```bash
 docker run --rm \
-  -p 8883:8883 \
+  -p 127.0.0.1:8883:8883 \
   -v "$PWD/certs:/etc/devnux/certs:ro" \
   ghcr.io/marcelositr/devnux-mesh-brasil:latest
 ```
@@ -97,13 +99,23 @@ Para utilizar outra PSK:
 
 ```bash
 docker run --rm \
-  -p 8883:8883 \
+  -p 127.0.0.1:8883:8883 \
   -v "$PWD/certs:/etc/devnux/certs:ro" \
   -e MESHTASTIC_DEFAULT_PSK="d4f1bb3a20290759f0bcffabcf4e6901" \
   ghcr.io/marcelositr/devnux-mesh-brasil:latest
 ```
 
 A chave privada, o certificado e outros segredos não devem ser copiados para dentro da imagem.
+
+### Teste com um rádio na rede local
+
+Se um rádio precisar conectar ao broker através da LAN, publique a porta somente no endereço privado específico do host, em vez de expô-la indiscriminadamente em todas as interfaces. Exemplo ilustrativo — substitua o endereço pelo IP privado real do host:
+
+```bash
+-p 192.0.2.10:8883:8883
+```
+
+O IP usado pelo rádio também precisa corresponder ao endereço coberto pelo certificado se o cliente validar o certificado. O exemplo de endereço acima é reservado para documentação e não deve ser usado como configuração real.
 
 ## Exemplo de configuração
 
@@ -120,9 +132,7 @@ Use certificados apropriados ao ambiente em que o broker será executado.
 
 ## Segurança operacional
 
-A configuração atual aceita conexões e inscrições MQTT sem autenticação adicional e não implementa ACL.
-
-Isso é uma característica do escopo atual, não uma indicação de que o broker deva ser exposto sem proteção em produção.
+A configuração atual aceita conexões e inscrições MQTT sem autenticação adicional e não implementa ACL. A porta não deve ser exposta à Internet nem a redes não confiáveis nessa condição.
 
 Antes de uma implantação pública, os requisitos de autenticação, autorização, controle de abuso e observabilidade deverão ser definidos com base no comportamento observado em hardware Meshtastic físico e real.
 
@@ -130,4 +140,4 @@ Não implemente essas camadas apenas com base em hipóteses. As possibilidades e
 
 ## Verificação
 
-Após alterações de configuração ou infraestrutura, execute a bateria completa descrita em [Guia de desenvolvimento](desenvolvimento.md). Os resultados da validação funcional e Docker estão registrados em [Validação](validacao.md).
+Após alterações de configuração ou infraestrutura, execute a bateria completa descrita em [Guia de desenvolvimento](desenvolvimento.md). Os resultados da validação funcional, Docker e hardware estão registrados em [Validação](validacao.md).
