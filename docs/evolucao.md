@@ -4,7 +4,9 @@
 
 Registrar possibilidades de evolução do broker sem transformar hipóteses em requisitos de implementação.
 
-O DevNux Mesh Brasil deve primeiro comprovar, com hardware Meshtastic físico e real, que o comportamento atual do broker corresponde ao funcionamento esperado da rede. Somente depois dessa validação será feita a curadoria das medidas de hardening e moderação que realmente forem necessárias.
+O broker já passou por testes automatizados, testes em Docker e um primeiro teste de comunicação com um rádio Meshtastic físico. A próxima etapa é concluir a observação do comportamento real, incluindo testes com mais de um nó, antes de decidir quais medidas de hardening ou moderação são necessárias.
+
+O estado detalhado dos testes está em [Validação](validacao.md).
 
 ## Regra de evolução
 
@@ -15,7 +17,9 @@ O fluxo de decisão é:
 ```text
 broker atual
     ↓
-testes com hardware Meshtastic real
+testes já realizados em ambiente controlado e com um rádio
+    ↓
+testes com dois ou mais nós Meshtastic físicos
     ↓
 observação do tráfego e do comportamento reais
     ↓
@@ -28,19 +32,25 @@ implementação incremental
 nova validação com hardware real
 ```
 
-A razão é prática: implementar mecanismos de controle antes de observar o comportamento real pode criar regras incorretas e gerar retrabalho quando o hardware chegar.
+A razão é prática: implementar mecanismos de controle antes de observar o comportamento real pode criar regras incorretas e gerar retrabalho quando a malha for testada em condições reais.
+
+## Estado atual da validação física
+
+O teste inicial com um Heltec Wi-Fi LoRa 32 V4 confirmou conexão MQTT/TLS, recebimento e processamento de pacotes e chegada de mensagens após a reconexão do Wi-Fi. Ainda não havia um segundo nó físico disponível para observar encaminhamento na malha.
+
+Três registros de uma mensagem foram observados em horários diferentes, mas a causa não foi determinada. O hop limit do Meshtastic limita o encaminhamento de pacotes entre nós; não significa que o broker deva receber uma cópia por hop. Não implementar deduplicação com base somente nessa observação. Para investigar repetições, primeiro comparar identificadores e campos dos pacotes e observar uma malha com múltiplos nós.
 
 ## Possibilidades futuras
 
 A lista abaixo é deliberadamente curta e priorizada. Ela não representa um compromisso de implementar todos os itens.
 
-### Prioridade provável
+### Prioridade a avaliar após os testes físicos
 
 #### Deduplicação
 
-Investigar e, se necessário, implementar deduplicação de pacotes para evitar processamento ou redistribuição repetida do mesmo tráfego.
+Investigar se o broker precisa evitar processamento ou redistribuição repetida do mesmo pacote. Os registros atuais, por si sós, não provam que exista um problema de duplicação que exija uma alteração.
 
-A regra de deduplicação, a identidade usada para reconhecer um pacote e o tempo de retenção devem ser definidos somente depois de observar o comportamento real da rede.
+A regra de deduplicação, a identidade usada para reconhecer um pacote e o tempo de retenção devem ser definidos somente depois de observar o comportamento real da rede e identificar pacotes repetidos com evidência suficiente.
 
 #### Rate limiting
 
@@ -58,7 +68,7 @@ Antes de adicionar mecanismos automáticos de bloqueio, deve ser possível obser
 
 Avaliar controle de publicação e inscrição por cliente e tópico antes de uma exposição pública mais ampla.
 
-A política deve ser simples e baseada no uso real do broker, evitando criar uma camada de autorização maior do que o problema exige.
+A política deve ser simples e baseada no uso real do broker, evitando criar uma camada de autorização maior do que o problema exige. Até que isso seja implementado e validado, o broker não deve ser exposto a redes não confiáveis.
 
 ### Possibilidades condicionais
 
@@ -108,9 +118,11 @@ Essas validações fazem parte do funcionamento atual e não devem ser confundid
 
 O projeto só deve passar da fase de observação para a implementação de hardening depois que:
 
-- o broker atual estiver validado com hardware Meshtastic físico e real;
-- o fluxo MQTT real estiver observado;
+- a conexão entre o broker e um rádio físico estiver repetidamente estável;
+- a comunicação com dois ou mais nós Meshtastic físicos tiver sido observada;
+- o fluxo MQTT real, incluindo uplink/downlink relevante, estiver observado;
 - o comportamento normal dos nós e gateways estiver compreendido;
+- possíveis repetições tiverem sido investigadas sem confundir hops com cópias MQTT;
 - problemas concretos tiverem sido identificados;
 - cada nova medida tiver uma justificativa baseada nesses dados;
 - a medida puder ser testada sem comprometer a compatibilidade já validada.
@@ -119,4 +131,4 @@ A lista deste documento deve ser revisada nesse momento. Itens que não demonstr
 
 ## Princípio
 
-> Primeiro provar que o broker atual funciona com hardware real. Depois decidir o que precisa ser protegido, limitado ou moderado.
+> Primeiro validar o broker com hardware real e compreender o comportamento da malha. Depois decidir o que precisa ser protegido, limitado ou moderado.
