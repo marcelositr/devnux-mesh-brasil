@@ -8,14 +8,14 @@ A estrutura interna está em [Arquitetura](arquitetura.md). Os valores configur�
 
 ## Famílias de tráfego MQTT
 
-O broker deve preservar o tópico e o payload originais. Nem todo tópico Meshtastic contém um `ServiceEnvelope`, e nem todo pacote é descriptografável com a PSK padrão.
+O broker preserva o tópico e os campos do payload, exceto pela reescrita de `MeshPacket.hop_limit` para zero em envelopes protobuf reconhecidos quando `MQTT_ZERO_HOP=true` (padrão). Nem todo tópico Meshtastic contém um `ServiceEnvelope`, e nem todo pacote é descriptografável com a PSK padrão.
 
 - **Protobuf de malha:** tópicos atuais como `msh/REGION/2/e/CHANNELNAME/USERID`; firmwares anteriores a 2.3.0 podem usar `/2/c/`. O payload normalmente é um `ServiceEnvelope` protobuf que encapsula um `MeshPacket`.
 - **JSON:** quando habilitado e suportado pelo firmware, tópicos como `msh/REGION/2/json/CHANNELNAME/USERID` carregam representações de um subconjunto de portnums. Algumas versões documentam o tópico especial `msh/REGION/2/json/mqtt/` para comandos de downlink, exigindo um canal chamado `mqtt` com downlink ativado.
 - **MapReport e tópicos auxiliares:** relatórios de mapa e outras famílias de tópicos não devem ser interpretados como `ServiceEnvelope` apenas por usarem o mesmo broker MQTT.
 - **Conteúdo de malha:** `MeshPacket` pode transportar mensagens de texto, posição, NodeInfo, telemetria, roteamento/ACK, waypoint, dados de administração e outros portnums. O broker não deve rejeitar portnums desconhecidos apenas por não os interpretar.
 
-Os nomes de tópicos dependem do root topic, da região, do canal, da versão do firmware e das opções MQTT. A inspeção local do broker é apenas observabilidade; falhas de parsing, validação ou descriptografia não bloqueiam a publicação aos assinantes.
+Os nomes de tópicos dependem do root topic, da região, do canal, da versão do firmware e das opções MQTT. A inspeção local do broker é apenas observabilidade; falhas de parsing, validação ou descriptografia não bloqueiam a publicação aos assinantes. A reescrita zero-hop aplica-se somente quando o payload pode ser decodificado como `ServiceEnvelope` em um tópico protobuf reconhecido.
 
 ## Inspeção opcional de ServiceEnvelope
 
