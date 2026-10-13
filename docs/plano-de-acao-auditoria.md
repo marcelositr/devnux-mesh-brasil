@@ -42,8 +42,8 @@ Finalizar o software com mudanças pequenas e rastreáveis, comportamento docume
 - [ ] Definir o modelo de conexão da rede (rádios conectados diretamente ou por gateways), pois o número de rádios não equivale necessariamente ao número de clientes MQTT.
 - [ ] Elaborar um perfil de carga representativo e medir memória/CPU/latência antes de declarar capacidade suportada.
 - [ ] Se forem definidos limites, configurar e testar os limites no broker.
-- [ ] Revisar `.dockerignore` para impedir que arquivos `.env`, certificados, chaves e outros segredos locais entrem no contexto de build, sem excluir exemplos necessários.
-- [ ] Documentar permissões e propriedade necessárias para a chave TLS montada no container, sem recomendar permissões excessivas em produção.
+- [x] Revisar `.dockerignore` para excluir arquivos `.env`, certificados, chaves e diretórios locais de segredos, preservando `.env.example`; o teste de regressão `scripts/test-dockerignore.sh` foi adicionado à CI. A execução da CI ainda precisa ser confirmada.
+- [x] Documentar a recomendação de menor privilégio para a chave TLS montada: chave `0640` restrita a root/grupo dedicado, grupo suplementar no container e bind mount somente leitura. A verificação automatizada desse procedimento ainda não foi concluída.
 - [ ] Manter explícita a restrição a redes confiáveis enquanto não houver autenticação MQTT e ACL.
 - [ ] Testar casos de PSK incorreta e payloads inválidos, documentando o que AES-CTR permite ou não detectar.
 - [ ] Não alterar a criptografia do protocolo Meshtastic sem requisito e evidência de interoperabilidade.
@@ -126,6 +126,7 @@ Atualizar esta seção a cada etapa concluída, com o SHA do commit e links dos 
 - **Revisão do diff:** comparação com o SHA inicial identificou apenas os seis arquivos previstos para testes, comportamento e documentação.
 - **Revisão do ciclo de vida:** `cmd/broker/main.go` já lida com falha de inicialização e encerramento por `SIGINT`/`SIGTERM`; nenhum defeito demonstrável encontrado, sem alteração de código.
 - **Decisão registrada:** planejar inicialmente para uma rede de até 200 rádios. Não definir limites de pacote/conexões até examinar a documentação da versão Mochi MQTT usada e estabelecer perfil de carga plausível.
-- **Próxima ação:** revisar `.dockerignore` e permissões da chave TLS, seguindo a regra de testes antes de qualquer mudança de comportamento.
+- **Progresso Fase 2:** `.dockerignore` atualizado e teste de regressão ligado à CI; documentação de permissões TLS atualizada. A CI precisa confirmar o teste de contexto Docker. A execução local de Docker não está disponível neste ambiente, portanto não foi declarada como executada.
+- **Próxima ação:** confirmar CI/CodeQL e decidir como validar de forma automatizada o acesso à chave TLS sem permissões globais; não alterar a cifra Meshtastic.
 - **Validação física multi-nó:** pendente.
 - **Integração com `main`:** reservada para o final.
