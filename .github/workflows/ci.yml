@@ -24,10 +24,13 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.23.x'
-          cache: true
+          cache: false
 
       - name: Check formatting
         run: test -z "$(gofmt -l cmd internal)"
+
+      - name: Download dependencies
+        run: go mod download
 
       - name: Verify dependencies
         run: go mod verify
