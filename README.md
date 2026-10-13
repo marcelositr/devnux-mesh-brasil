@@ -4,7 +4,7 @@
 
 Broker MQTT para receber, validar e processar publicações Meshtastic por MQTT/TLS.
 
-O **DevNux Mesh Brasil** é um projeto de infraestrutura de código aberto. O broker preserva e encaminha publicações MQTT conforme os filtros dos assinantes, incluindo pacotes protobuf Meshtastic, tópicos JSON e outras famílias de tráfego. Para observabilidade, tenta inspecionar tópicos protobuf `ServiceEnvelope` com a PSK local, sem exigir que a descriptografia seja bem-sucedida para encaminhar o payload original.
+O **DevNux Mesh Brasil** é um projeto de infraestrutura de código aberto. O broker encaminha publicações MQTT conforme os filtros dos assinantes, incluindo pacotes protobuf Meshtastic, tópicos JSON e outras famílias de tráfego. Para observabilidade, tenta inspecionar tópicos protobuf `ServiceEnvelope` com a PSK local, sem exigir que a descriptografia seja bem-sucedida para encaminhá-los. Por padrão, reescreve apenas `MeshPacket.hop_limit` para zero em envelopes protobuf reconhecidos, preservando `hop_start`.
 
 ## Estado do projeto
 
@@ -16,7 +16,7 @@ O teste físico documentado utilizou um **Heltec Wi-Fi LoRa 32 V4**. A validaç�
 
 - inicia um broker MQTT sobre TLS;
 - aceita conexões e inscrições MQTT;
-- encaminha publicações MQTT preservando tópico e payload originais;
+- encaminha publicações MQTT preservando os tópicos e os campos do payload, exceto pela reescrita de `hop_limit` quando a política zero-hop está ativa;
 - inspeciona, quando possível, ServiceEnvelope protobuf em tópicos de malha atuais e legados;
 - tenta descriptografar pacotes para gerar logs de metadados, sem usar a PSK local como filtro de encaminhamento;
 - preserva tópicos JSON, MapReport, status e outras famílias sem exigir que sejam protobuf de malha;
