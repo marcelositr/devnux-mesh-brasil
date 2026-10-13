@@ -83,7 +83,7 @@ func TestMQTTSubscriberReceivesAcceptedPublication(t *testing.T) {
 		},
 		{
 			name:    "ServiceEnvelope válido",
-			topic:   "msh/test",
+			topic:   topic,
 			payload: validTestEnvelopePayload(t),
 		},
 		{
