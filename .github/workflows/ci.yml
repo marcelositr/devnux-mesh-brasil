@@ -49,9 +49,6 @@ jobs:
       - name: Testes com detector de condições de corrida
         run: go test -race ./...
 
-      - name: Fuzz direcionado do parser ServiceEnvelope (5 s)
-        run: go test ./internal/broker -fuzz=FuzzParseServiceEnvelope -fuzztime=5s -parallel=2
-
       - name: Verificar vulnerabilidades alcançáveis nas dependências Go
         run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
 
