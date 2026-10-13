@@ -21,7 +21,6 @@ func testHandler() *Handler {
 	return NewHandler(logger, config.Config{DefaultPSK: crypto.DefaultPSK})
 }
 
-
 func TestLogReceivedMessageDoesNotLogTextPayload(t *testing.T) {
 	var logs bytes.Buffer
 	logger := slog.New(slog.NewTextHandler(&logs, nil))
