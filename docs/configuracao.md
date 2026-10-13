@@ -78,6 +78,8 @@ docker build -t devnux-mesh-brasil .
 
 A imagem executa o broker como usuário sem privilégios. O certificado e a chave privada devem ser fornecidos em tempo de execução, fora da imagem.
 
+**Permissões da chave privada em Linux:** não use permissões `0644` em uma chave real. Uma opção é restringir a chave a `root` e a um grupo dedicado (`0640`) e iniciar o container com o GID desse grupo como grupo suplementar (`--group-add`). O diretório montado também precisa permitir travessia ao grupo. Mantenha o bind mount somente leitura (`:ro`) e confirme a propriedade, o GID e as permissões no host. O usuário `devnux` continua sem privilégios; não torne a chave globalmente legível para contornar problemas de acesso.
+
 Estrutura esperada no host:
 
 ```text
