@@ -3,7 +3,7 @@
 - **Projeto:** DevNux Mesh Brasil
 - **Branch de trabalho:** `work/finalizacao-projeto`
 - **Base da auditoria:** commit `a6f6672c54f83729872e9591b5863f480c0ad650`
-- **Estado:** Fase 1 concluída; comportamento de pacotes sem dados úteis implementado, testado e documentado. As atualizações de documentação aguardam a nova execução de CI/CodeQL.
+- **Estado:** Fase 1 concluída; Fase 2 em andamento. Meta inicial de planejamento acordada: dimensionar para uma rede de até 200 rádios, sem tratar isso como capacidade comprovada nem converter diretamente rádios em conexões MQTT.
 - **Processo:** trabalhar diretamente na branch de trabalho. Não abrir PRs novos nem fazer merge durante a execução. A integração com `main` será tratada somente no final.
 - **Regra de evidência:** não declarar testes executados sem resultado verificável. Separar testes automatizados, testes de container e validação física com hardware.
 
@@ -38,7 +38,9 @@ Finalizar o software com mudanças pequenas e rastreáveis, comportamento docume
 
 ### Fase 2 — Segurança e configuração
 
-- [ ] Avaliar limites de tamanho de pacote, clientes e recursos pendentes com base no tráfego Meshtastic esperado; não escolher valores arbitrários.
+- [ ] Avaliar limites de tamanho de pacote, clientes e recursos pendentes com base no tráfego Meshtastic esperado para uma meta de planejamento de até 200 rádios; não escolher valores arbitrários.
+- [ ] Definir o modelo de conexão da rede (rádios conectados diretamente ou por gateways), pois o número de rádios não equivale necessariamente ao número de clientes MQTT.
+- [ ] Elaborar um perfil de carga representativo e medir memória/CPU/latência antes de declarar capacidade suportada.
 - [ ] Se forem definidos limites, configurar e testar os limites no broker.
 - [ ] Revisar `.dockerignore` para impedir que arquivos `.env`, certificados, chaves e outros segredos locais entrem no contexto de build, sem excluir exemplos necessários.
 - [ ] Documentar permissões e propriedade necessárias para a chave TLS montada no container, sem recomendar permissões excessivas em produção.
@@ -107,7 +109,7 @@ Antes de implementar decisões que alterem o escopo, confirmar:
 
 1. **Ambiente de uso:** somente rede local/controlada ou futura exposição pública?
 2. **Semântica de publicação:** pacotes sem `Data` útil devem ser descartados ou permanecer no fluxo MQTT?
-3. **Limites operacionais:** qual é o tamanho/carga de pacotes esperado para o cenário de uso?
+3. **Meta inicial de escala — definida para planejamento:** até 200 rádios. A capacidade real e os limites operacionais ainda precisam ser validados por perfil de carga e testes; a topologia MQTT/gateways precisa ser considerada.
 
 O trabalho de auditoria, testes automatizados e correções não deve ser confundido com validação física multi-nó.
 
@@ -115,7 +117,7 @@ O trabalho de auditoria, testes automatizados e correções não deve ser confun
 
 Atualizar esta seção a cada etapa concluída, com o SHA do commit e links dos resultados:
 
-- **Fase atual:** Fase 2 — segurança e configuração. Fase 1 concluída no commit `11af5e650ca84c615d2d884bc05dfa7b1d8e5c38`; commits posteriores atualizaram os registros de validação.
+- **Fase atual:** Fase 2 — segurança e configuração. Meta de planejamento acordada: até 200 rádios; não equivale a garantia de capacidade. Fase 1 concluída e validada; documentação de resultados atualizada em commits posteriores.
 - **SHA inicial da auditoria:** `a6f6672c54f83729872e9591b5863f480c0ad650`.
 - **SHA com testes de regressão antes da implementação:** `8fd8aa9d823693243d29ffb100adfbcc5cc901e1` — CI falhou como esperado em `TestOnPublishIgnoresDataWithoutUsefulPayload`, confirmando o defeito.
 - **SHA candidato validado:** `11af5e650ca84c615d2d884bc05dfa7b1d8e5c38`.
@@ -123,6 +125,7 @@ Atualizar esta seção a cada etapa concluída, com o SHA do commit e links dos 
 - **CodeQL:** [execução 38424940149](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38424940149) — sucesso; job `Análise CodeQL` concluído.
 - **Revisão do diff:** comparação com o SHA inicial identificou apenas os seis arquivos previstos para testes, comportamento e documentação.
 - **Revisão do ciclo de vida:** `cmd/broker/main.go` já lida com falha de inicialização e encerramento por `SIGINT`/`SIGTERM`; nenhum defeito demonstrável encontrado, sem alteração de código.
-- **Próxima ação:** iniciar a Fase 2 avaliando limites operacionais a partir do cenário de tráfego esperado; não definir valores arbitrários.
+- **Decisão registrada:** planejar inicialmente para uma rede de até 200 rádios. Não definir limites de pacote/conexões até examinar a documentação da versão Mochi MQTT usada e estabelecer perfil de carga plausível.
+- **Próxima ação:** revisar `.dockerignore` e permissões da chave TLS, seguindo a regra de testes antes de qualquer mudança de comportamento.
 - **Validação física multi-nó:** pendente.
 - **Integração com `main`:** reservada para o final.
