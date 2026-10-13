@@ -21,7 +21,8 @@ A cobertura presente nos testes do repositório inclui:
 - preservação do tópico e dos campos de payload no hook `OnPublish`, incluindo falhas de inspeção, com reescrita de `hop_limit` quando zero-hop está ativo;
 - encaminhamento de tópicos JSON sem interpretá-los como `ServiceEnvelope` (pass-through MQTT; não comprova downlink físico JSON);
 - testes do hook para portnums representativos: texto, posição, NodeInfo, roteamento, waypoint, telemetria, vizinhos e faixa de aplicações privadas, sem filtragem por tipo;
-- teste de integração MQTT/TLS que confirma entrega de `ServiceEnvelope`, `portnum = 0` e tópico JSON a um assinante; o caso JSON valida apenas o pass-through do broker.
+- teste de integração MQTT/TLS que confirma entrega de `ServiceEnvelope`, `portnum = 0` e tópico JSON a um assinante; o caso JSON valida apenas o pass-through do broker, não o downlink físico.
+- conferência do código oficial do firmware 2.7.26.54e0d8d: JSON downlink é suportado quando `mqtt.json_enabled` está ativo e o canal especial `mqtt` tem downlink habilitado; isso ainda precisa de teste em hardware.
 
 **Limites da cobertura:** o teste de PSK incorreta cobre apenas um vetor fixo e garante que a chave alternativa não recupera aquele `Data` conhecido. AES-CTR não autentica o conteúdo; uma chave errada pode produzir bytes que falham no parsing ou, em alguns casos, dados que ainda podem ser interpretados. Não existe garantia criptográfica de detecção de chave incorreta. O teste de integração conecta dois clientes MQTT ao servidor TLS de teste e verifica a entrega de publicações protobuf e JSON sem que a inspeção local filtre os pacotes.
 
@@ -91,6 +92,7 @@ A documentação disponível registra testes automatizados, um teste Docker e um
 - funcionamento em uma malha Meshtastic real com múltiplos nós;
 - estabilidade prolongada;
 - compatibilidade semântica e transmissão física de todos os tipos de payload ou portnums; os testes representativos verificam encaminhamento opaco, não decodificação de cada payload;
+- downlink físico JSON no firmware 2.7.26, apesar de o código do firmware suportar esse caminho;
 - suporte transparente a canais com PSKs diferentes;
 - autenticação de clientes MQTT ou autorização por tópico;
 - validação em hardware real da política zero-hop implementada no broker;
