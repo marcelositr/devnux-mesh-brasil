@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_call:
   push:
     branches:
       - main
@@ -70,23 +71,21 @@ jobs:
           # O GID do grupo primário do usuário do container é usado no host para o bind mount.
           container_gid="$(docker run --rm --entrypoint sh devnux-mesh-brasil:test -c 'id -g devnux')"
           sudo chgrp "$container_gid" "$cert_dir/private.key"
+          chmod 755 "$cert_dir"
           chmod 640 "$cert_dir/private.key"
           chmod 644 "$cert_dir/certificate.pem"
           test "$(stat -c '%a' "$cert_dir/private.key")" = "640"
 
-          docker run -d --rm \
+          docker run -d \
             --name devnux-mesh-broker-smoke \
             -p 127.0.0.1:18883:8883 \
             -v "$cert_dir:/etc/devnux/certs:ro" \
             devnux-mesh-brasil:test
 
-          cleanup() {
-            docker stop devnux-mesh-broker-smoke >/dev/null 2>&1 || true
-          }
-          trap cleanup EXIT
+          trap 'docker rm -f devnux-mesh-broker-smoke >/dev/null 2>&1 || true' EXIT
 
           tls_log="$RUNNER_TEMP/devnux-tls-smoke.log"
-          for attempt in $(seq 1 20); do
+          for _ in $(seq 1 20); do
             timeout 3 openssl s_client \
               -connect 127.0.0.1:18883 \
               -CAfile "$cert_dir/certificate.pem" \
