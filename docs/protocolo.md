@@ -35,6 +35,56 @@ Antes da descriptografia, o processador exige:
 
 Falhas de validação impedem apenas a inspeção do envelope; a publicação MQTT original continua sendo encaminhada.
 
+## Inventário de PortNums e payloads
+
+O campo `Data.portnum` identifica o tipo de aplicação; o broker não deve exigir que a versão local das protobufs reconheça cada valor para encaminhar o pacote. O catálogo oficial evolui e inclui aplicações de terceiros e privadas. A tabela resume os valores registrados no [`portnums.proto` oficial](https://github.com/meshtastic/protobufs/blob/master/meshtastic/portnums.proto); ela é referência de protocolo, não uma lista de filtros do broker.
+
+| PortNum | Nome | Categoria |
+|---:|---|---|
+| 0 | `UNKNOWN_APP` | Payload opaco legado |
+| 1 | `TEXT_MESSAGE_APP` | Texto |
+| 2 | `REMOTE_HARDWARE_APP` | Controle de hardware remoto |
+| 3 | `POSITION_APP` | Posição |
+| 4 | `NODEINFO_APP` | Identidade e informações do nó |
+| 5 | `ROUTING_APP` | Roteamento, ACK/NACK e descoberta de rota |
+| 6 | `ADMIN_APP` | Administração e configuração |
+| 7 | `TEXT_MESSAGE_COMPRESSED_APP` | Texto comprimido |
+| 8 | `WAYPOINT_APP` | Waypoints |
+| 9 | `AUDIO_APP` | Quadros de áudio |
+| 10 | `DETECTION_SENSOR_APP` | Sensor de detecção |
+| 11 | `ALERT_APP` | Alertas |
+| 12 | `KEY_VERIFICATION_APP` | Verificação de chaves |
+| 13 | `REMOTE_SHELL_APP` | Shell remoto |
+| 32 | `REPLY_APP` | Resposta/ping |
+| 33 | `IP_TUNNEL_APP` | Túnel IP |
+| 34 | `PAXCOUNTER_APP` | Contagem de pessoas |
+| 35 | `STORE_FORWARD_PLUSPLUS_APP` | Store-and-forward++ |
+| 36 | `NODE_STATUS_APP` | Estado do nó |
+| 37 | `MESH_BEACON_APP` | Beacon de malha |
+| 38 | `PAGING_APP` | Paging com confirmação humana |
+| 64 | `SERIAL_APP` | Transporte serial |
+| 65 | `STORE_FORWARD_APP` | Store-and-forward |
+| 66 | `RANGE_TEST_APP` | Teste de alcance |
+| 67 | `TELEMETRY_APP` | Telemetria |
+| 68 | `ZPS_APP` | Estimativa de posição |
+| 69 | `SIMULATOR_APP` | Simulador |
+| 70 | `TRACEROUTE_APP` | Traceroute |
+| 71 | `NEIGHBORINFO_APP` | Informações de vizinhos |
+| 72 | `ATAK_PLUGIN` | Integração ATAK |
+| 73 | `MAP_REPORT_APP` | Relatório de mapa |
+| 74 | `POWERSTRESS_APP` | Teste de consumo de energia |
+| 75 | `LORAWAN_BRIDGE` | Ponte LoRaWAN |
+| 76 | `RETICULUM_TUNNEL_APP` | Túnel Reticulum |
+| 77 | `CAYENNE_APP` | Cayenne Low Power Payload |
+| 78 | `ATAK_PLUGIN_V2` | Integração ATAK v2 |
+| 79 | `LORA_OTA_APP` | Atualização de firmware via LoRa |
+| 112 | `GROUPALARM_APP` | Integração GroupAlarm |
+| 256–511 | Aplicações privadas | Extensões privadas; o valor 256 também é denominado `PRIVATE_APP` |
+
+Além do `Data`, o `MeshPacket` carrega campos de encaminhamento e controle como origem, destino, ID do pacote, canal, limite inicial/atual de saltos, solicitação de ACK e próximo salto. O `ServiceEnvelope` acrescenta `channel_id` e `gateway_id). O broker deve preservar o protobuf original em vez de reconstruir um pacote com campos que não compreende.
+
+O MQTT também pode transportar `MapReport` e tópicos auxiliares fora do formato comum `ServiceEnvelope`. Esses payloads devem ser preservados, mesmo que o broker não os decodifique.
+
 ## Criptografia
 
 O processamento utiliza AES-CTR.
