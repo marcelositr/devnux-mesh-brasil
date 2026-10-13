@@ -14,18 +14,18 @@ Este documento descreve a organização do código e o fluxo de uma publicação
 ## Fluxo de uma publicação
 
 1. O cliente estabelece conexão MQTT sobre TLS.
-2. O broker recebe uma publicação.
-3. O hook MQTT entrega o payload ao processador.
-4. O payload é interpretado como ServiceEnvelope protobuf.
-5. O envelope é validado.
-6. O pacote é descriptografado usando a PSK configurada.
-7. O resultado é interpretado como Data protobuf.
-8. O fluxo registra os dados relevantes.
-9. Erros de parsing, validação ou descriptografia interrompem o processamento daquela publicação.
+2. O broker recebe uma publicação e aplica o roteamento MQTT normal conforme os filtros dos assinantes.
+3. O hook reconhece tópicos protobuf Meshtastic atuais (`/2/e/`) e legados (`/2/c/`) para inspeção opcional.
+4. Quando o payload é um `ServiceEnvelope` que pode ser interpretado, o broker tenta registrar metadados do `Data`; o conteúdo textual não é gravado nos logs.
+5. Falha de parsing, validação ou descriptografia afeta apenas a inspeção. O tópico e o payload originais continuam no fluxo MQTT.
+6. Tópicos JSON, MapReport, status e outras famílias MQTT são encaminhados sem serem tratados como `ServiceEnvelope`.
+7. Um gateway Meshtastic configurado para downlink assina os tópicos correspondentes e decide, segundo a configuração do rádio e do firmware, se encaminha os pacotes recebidos à malha.
 
-## Limite importante
+## Limites importantes
 
-O hook atual tenta processar cada publicação como um envelope Meshtastic e usa uma PSK configurada. Publicações que não correspondam ao formato esperado ou não possam ser descriptografadas são ignoradas. Portanto, a implementação atual não deve ser descrita como encaminhador MQTT opaco e universal para quaisquer canais ou PSKs.
+O broker não cria pacotes LoRa nem transmite diretamente por USB/serial. O downlink físico depende de um nó gateway com o módulo MQTT habilitado e downlink ativado no canal apropriado. A PSK configurada no broker serve apenas à inspeção local de alguns pacotes; não deve ser usada como requisito para encaminhar tráfego cifrado, canais com chaves distintas, pacotes não decifráveis ou portnums ainda desconhecidos.
+
+O broker preserva os tópicos e payloads recebidos, mas a configuração atual não implementa autenticação MQTT nem ACL por tópico. Por isso, deve permanecer em rede controlada até que os controles de acesso sejam projetados e validados.
 
 O processamento criptográfico utiliza AES-CTR, que não autentica nem protege a integridade do payload; não se deve afirmar que toda PSK incorreta será detectada. O transporte TLS protege a conexão, mas não fornece por si só autenticação MQTT de clientes nem autorização por tópico. A configuração atual não implementa esses controles.
 

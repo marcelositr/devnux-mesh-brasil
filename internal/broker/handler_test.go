@@ -41,7 +41,7 @@ func TestLogReceivedMessageDoesNotLogTextPayload(t *testing.T) {
 	}
 }
 
-func TestOnPublishIgnoresEmptyPayload(t *testing.T) {
+func TestOnPublishForwardsEmptyPayload(t *testing.T) {
 	handler := testHandler()
 	client := &mqtt.Client{ID: "test-client"}
 
@@ -49,15 +49,15 @@ func TestOnPublishIgnoresEmptyPayload(t *testing.T) {
 		TopicName: "msh/test",
 	})
 
-	if err != packets.CodeSuccessIgnore {
-		t.Fatalf("OnPublish() erro = %v, want %v", err, packets.CodeSuccessIgnore)
+	if err != nil
+		t.Fatalf("OnPublish() deveria encaminhar payload sem erro, recebeu %v", err)
 	}
 	if got.Payload != nil {
 		t.Fatalf("OnPublish() alterou payload: %x", got.Payload)
 	}
 }
 
-func TestOnPublishIgnoresInvalidProtobuf(t *testing.T) {
+func TestOnPublishForwardsInvalidProtobuf(t *testing.T) {
 	handler := testHandler()
 	client := &mqtt.Client{ID: "test-client"}
 	payload := []byte{0xff, 0xff, 0xff}
@@ -101,7 +101,7 @@ func TestOnPublishAcceptsValidEnvelope(t *testing.T) {
 	}
 }
 
-func TestOnPublishBlocksEnvelopeWhenDecryptionCannotDecodeData(t *testing.T) {
+func TestOnPublishForwardsEnvelopeWhenDecryptionCannotDecodeData(t *testing.T) {
 	handler := testHandler()
 	client := &mqtt.Client{ID: "test-client"}
 
@@ -127,14 +127,14 @@ func TestOnPublishBlocksEnvelopeWhenDecryptionCannotDecodeData(t *testing.T) {
 	})
 
 	if err != packets.CodeSuccessIgnore {
-		t.Fatalf("OnPublish() deveria bloquear falha de parsing do Data: got %v", err)
+		t.Fatalf("OnPublish() deveria preservar o envelope quando a descriptografia falha: %v", err)
 	}
 	if !bytes.Equal(got.Payload, payload) {
 		t.Fatalf("OnPublish() alterou payload")
 	}
 }
 
-func TestOnPublishIgnoresDataWithoutUsefulPayload(t *testing.T) {
+func TestOnPublishForwardsDataWithoutUsefulPayload(t *testing.T) {
 	tests := []struct {
 		name string
 		data *meshtastic.Data
@@ -166,8 +166,8 @@ func TestOnPublishIgnoresDataWithoutUsefulPayload(t *testing.T) {
 				TopicName: "msh/test",
 				Payload:   payload,
 			})
-			if result != packets.CodeSuccessIgnore {
-				t.Fatalf("OnPublish() = %v, esperado ignorar publicação (%v)", result, packets.CodeSuccessIgnore)
+			if result != nil
+				t.Fatalf("OnPublish() deveria encaminhar Data sem payload útil, recebeu %v", result)
 			}
 			if !bytes.Equal(got.Payload, payload) {
 				t.Fatal("OnPublish() alterou o payload original")
@@ -197,5 +197,45 @@ func TestOnPublishAcceptsUnknownPortnumWithPayload(t *testing.T) {
 	}
 	if !bytes.Equal(got.Payload, payload) {
 		t.Fatal("OnPublish() alterou o payload original")
+	}
+}
+
+
+func TestOnPublishForwardsJSONDownlinkWithoutParsingAsServiceEnvelope(t *testing.T) {
+	handler := testHandler()
+	client := &mqtt.Client{ID: "test-client"}
+	payload := []byte(`{"from":12345,"type":"sendtext","payload":"integration test"}`)
+	topic := "msh/2/json/mqtt/"
+
+	got, err := handler.OnPublish(client, packets.Packet{
+		TopicName: topic,
+		Payload:   payload,
+	})
+	if err != nil {
+		t.Fatalf("OnPublish() deveria preservar tópico JSON: %v", err)
+	}
+	if got.TopicName != topic || !bytes.Equal(got.Payload, payload) {
+		t.Fatal("OnPublish() alterou o tópico ou payload JSON")
+	}
+}
+
+func TestIsProtobufTopic(t *testing.T) {
+	tests := []struct {
+		topic string
+		want  bool
+	}{
+		{topic: "msh/BR/2/e/LongFast/!abcd1234", want: true},
+		{topic: "msh/2/e/LongFast/!abcd1234", want: true},
+		{topic: "msh/US/2/c/LongFast/!abcd1234", want: true},
+		{topic: "msh/BR/2/json/LongFast/!abcd1234", want: false},
+		{topic: "msh/BR/2/map/!abcd1234", want: false},
+		{topic: "msh/BR/2/stat/!abcd1234", want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.topic, func(t *testing.T) {
+			if got := isProtobufTopic(tt.topic); got != tt.want {
+				t.Fatalf("isProtobufTopic(%q) = %v, want %v", tt.topic, got, tt.want)
+			}
+		})
 	}
 }

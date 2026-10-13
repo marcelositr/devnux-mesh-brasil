@@ -6,11 +6,20 @@ Registrar o comportamento de protocolo implementado pelo DevNux Mesh Brasil sem 
 
 A estrutura interna está em [Arquitetura](arquitetura.md). Os valores configuráveis estão em [Configuração e execução](configuracao.md).
 
-## Entrada MQTT
+## Famílias de tráfego MQTT
 
-O payload de uma publicação MQTT é tratado como um `ServiceEnvelope` protobuf.
+O broker deve preservar o tópico e o payload originais. Nem todo tópico Meshtastic contém um `ServiceEnvelope`, e nem todo pacote é descriptografável com a PSK padrão.
 
-O nome do tópico não determina, nesta etapa, uma regra adicional de filtragem. O tópico pode ser registrado pelo fluxo MQTT, mas não é usado para selecionar a PSK.
+- **Protobuf de malha:** tópicos atuais como `msh/REGION/2/e/CHANNELNAME/USERID`; firmwares anteriores a 2.3.0 podem usar `/2/c/`. O payload normalmente é um `ServiceEnvelope` protobuf que encapsula um `MeshPacket`.
+- **JSON:** quando habilitado e suportado pelo firmware, tópicos como `msh/REGION/2/json/CHANNELNAME/USERID` carregam representações de um subconjunto de portnums. Algumas versões documentam o tópico especial `msh/REGION/2/json/mqtt/` para comandos de downlink, exigindo um canal chamado `mqtt` com downlink ativado.
+- **MapReport e tópicos auxiliares:** relatórios de mapa e outras famílias de tópicos não devem ser interpretados como `ServiceEnvelope` apenas por usarem o mesmo broker MQTT.
+- **Conteúdo de malha:** `MeshPacket` pode transportar mensagens de texto, posição, NodeInfo, telemetria, roteamento/ACK, waypoint, dados de administração e outros portnums. O broker não deve rejeitar portnums desconhecidos apenas por não os interpretar.
+
+Os nomes de tópicos dependem do root topic, da região, do canal, da versão do firmware e das opções MQTT. A inspeção local do broker é apenas observabilidade; falhas de parsing, validação ou descriptografia não bloqueiam a publicação aos assinantes.
+
+## Inspeção opcional de ServiceEnvelope
+
+Para tópicos protobuf reconhecidos, o processador tenta interpretar o payload como `ServiceEnvelope`. O nome do tópico não seleciona a PSK, e a PSK local não representa necessariamente os canais privados ou outros modos de criptografia. A falha de inspeção não altera nem descarta o payload MQTT.
 
 ## Validação do envelope
 
@@ -24,7 +33,7 @@ Antes da descriptografia, o processador exige:
 - payload criptografado presente;
 - ausência de payload já decodificado no `MeshPacket`.
 
-Falhas de validação fazem a publicação ser ignorada pelo fluxo de processamento.
+Falhas de validação impedem apenas a inspeção do envelope; a publicação MQTT original continua sendo encaminhada.
 
 ## Criptografia
 
@@ -54,13 +63,13 @@ A mesma transformação AES-CTR é usada para criptografar e descriptografar dad
 
 O resultado é interpretado como `meshtastic.Data`.
 
-O fluxo registra mensagens de texto e outros portnums quando o `Data` contém payload. Portnums desconhecidos não são descartados apenas por serem desconhecidos, desde que o payload seja válido. `Data` com `portnum = 0` ou payload vazio é ignorado pelo hook e não é encaminhado aos assinantes MQTT. Falhas de parsing, validação ou descriptografia também são ignoradas.
+Quando a inspeção consegue interpretar o `Data`, o fluxo registra metadados de mensagens de texto e outros portnums sem registrar o conteúdo textual. Portnums desconhecidos, `portnum = 0`, payload vazio e falhas de parsing, validação ou descriptografia não são motivo para bloquear a publicação MQTT original.
 
 ## MQTT, hops e repetições
 
 O hop limit do Meshtastic limita quantos encaminhamentos um pacote pode realizar na malha de rádios. Isso não determina quantas publicações MQTT o broker deve receber. Uma contagem de logs repetidos, isoladamente, não prova que sejam cópias do mesmo pacote nem que a causa seja o hop limit.
 
-Para investigar repetições, é necessário comparar identificadores e campos do protocolo e observar o tráfego em uma malha com mais de um nó. O broker não implementa deduplicação nesta etapa; não adicionar essa regra sem evidência de um problema concreto e sem critérios compatíveis com o comportamento real da rede.
+Para investigar repetições, é necessário comparar identificadores e campos do protocolo e observar o tráfego em uma malha com mais de um nó. O broker não implementa deduplicação nesta etapa; não adicionar essa regra sem evidência de um problema concreto e sem critérios compatíveis com o comportamento real da rede. Encaminhar mensagens duplicadas é possível quando vários gateways publicam o mesmo pacote; consumidores que precisem deduplicar devem comparar o ID do pacote e outros campos de protocolo.
 
 A configuração MQTT do Meshtastic também define quais canais fazem uplink para o servidor e quais recebem downlink. Consulte a [documentação oficial do módulo MQTT](https://meshtastic.org/docs/configuration/module/mqtt/) para a semântica das opções do rádio.
 

@@ -2,6 +2,7 @@ package broker
 
 import (
 	"log/slog"
+	"strings"
 
 	mqtt "github.com/mochi-mqtt/server/v2"
 	"github.com/mochi-mqtt/server/v2/packets"
@@ -11,7 +12,7 @@ import (
 	"github.com/marcelositr/devnux-mesh-brasil/internal/config"
 )
 
-// Handler integra os eventos MQTT com o processamento de pacotes do broker.
+// Handler integra os eventos MQTT com a inspeção opcional de pacotes Meshtastic.
 type Handler struct {
 	mqtt.HookBase
 	logger    *slog.Logger
@@ -56,40 +57,67 @@ func (h *Handler) OnSubscribe(client *mqtt.Client, packet packets.Packet) packet
 	return packet
 }
 
-// OnPublish valida e interpreta o payload Meshtastic antes de permitir a publicação.
-// O pacote original é preservado para que o broker MQTT continue seu fluxo normal.
+// OnPublish inspeciona pacotes Meshtastic quando possível, sem filtrar o fluxo MQTT.
+// A inspeção e a PSK local servem apenas para observabilidade; o tópico e o payload
+// originais são preservados para que o broker encaminhe o tráfego aos assinantes.
 func (h *Handler) OnPublish(client *mqtt.Client, packet packets.Packet) (packets.Packet, error) {
 	if len(packet.Payload) == 0 {
-		h.logger.Warn("payload vazio recebido", "topic", packet.TopicName, "client_id", client.ID)
-		return packet, packets.CodeSuccessIgnore
+		h.logger.Debug("publicação MQTT com payload vazio encaminhada", "topic", packet.TopicName, "client_id", client.ID)
+		return packet, nil
+	}
+
+	// JSON, MapReport, status e outros tópicos não carregam necessariamente
+	// um ServiceEnvelope. Eles continuam no fluxo MQTT sem interpretação local.
+	if !isProtobufTopic(packet.TopicName) {
+		h.logger.Debug("publicação MQTT não protobuf encaminhada", "topic", packet.TopicName, "client_id", client.ID, "payload_bytes", len(packet.Payload))
+		return packet, nil
 	}
 
 	envelope, err := h.processor.parseServiceEnvelope(packet.Payload)
 	if err != nil {
-		h.logger.Warn("falha ao decodificar protobuf", "topic", packet.TopicName, "client_id", client.ID)
-		return packet, packets.CodeSuccessIgnore
+		h.logger.Warn("falha ao inspecionar ServiceEnvelope; publicação preservada", "topic", packet.TopicName, "client_id", client.ID)
+		return packet, nil
+	}
+
+	if envelope.GetPacket() != nil && envelope.GetPacket().GetDecoded() != nil {
+		h.logReceivedMessage(packet.TopicName, client.ID, envelope.GetPacket().GetDecoded())
+		return packet, nil
 	}
 
 	if err := h.processor.validateServiceEnvelope(envelope); err != nil {
-		h.logger.Warn("service envelope inválido", "topic", packet.TopicName, "client_id", client.ID, "erro", err)
-		return packet, packets.CodeSuccessIgnore
+		h.logger.Warn("ServiceEnvelope não pôde ser validado para inspeção; publicação preservada", "topic", packet.TopicName, "client_id", client.ID, "erro", err)
+		return packet, nil
 	}
 
 	data, err := h.processor.decryptMeshPacket(envelope)
 	if err != nil {
-		h.logger.Warn("não foi possível interpretar o pacote criptografado", "topic", packet.TopicName, "client_id", client.ID, "erro", err)
-		return packet, packets.CodeSuccessIgnore
+		// A chave configurada pode não corresponder ao canal ou ao tipo de
+		// criptografia. Isso não pode impedir o encaminhamento do pacote bruto.
+		h.logger.Debug("pacote Meshtastic encaminhado sem descriptografia local", "topic", packet.TopicName, "client_id", client.ID, "erro", err)
+		return packet, nil
 	}
 	if data == nil {
-		h.logger.Debug("pacote sem dados úteis ignorado", "topic", packet.TopicName, "client_id", client.ID)
-		return packet, packets.CodeSuccessIgnore
+		h.logger.Debug("pacote Meshtastic sem dados interpretáveis localmente encaminhado", "topic", packet.TopicName, "client_id", client.ID)
+		return packet, nil
 	}
 
 	h.logReceivedMessage(packet.TopicName, client.ID, data)
 	return packet, nil
 }
 
-// logReceivedMessage registra mensagens de texto separadamente dos demais portnums.
+// isProtobufTopic reconhece tópicos protobuf atuais e o prefixo legado.
+// Outros tópicos MQTT continuam sendo encaminhados sem parsing específico.
+func isProtobufTopic(topic string) bool {
+	parts := strings.Split(strings.Trim(topic, "/"), "/")
+	for i := 0; i+1 < len(parts); i++ {
+		if parts[i] == "2" && (parts[i+1] == "e" || parts[i+1] == "c") {
+			return true
+		}
+	}
+	return false
+}
+
+// logReceivedMessage registra metadados, nunca o conteúdo do payload de texto.
 func (h *Handler) logReceivedMessage(topic, clientID string, data *meshtastic.Data) {
 	if data != nil && int32(data.GetPortnum()) == 1 {
 		h.logger.Info("mensagem de texto recebida", "topic", topic, "client_id", clientID, "portnum", int32(data.GetPortnum()), "payload_bytes", len(data.GetPayload()))

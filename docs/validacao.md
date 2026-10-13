@@ -6,7 +6,7 @@ Este documento registra resultados conhecidos de testes automatizados, Docker e 
 
 A cobertura presente nos testes do repositório inclui:
 
-- rejeição de payload protobuf inválido pelo hook;
+- preservação e encaminhamento de payload protobuf inválido sem interromper o fluxo MQTT;
 - processamento de ServiceEnvelope Meshtastic válido;
 - validação de campos obrigatórios e rejeição de envelopes/pacotes incompletos;
 - descriptografia de um pacote válido e interpretação de diferentes portnums;
@@ -16,11 +16,13 @@ A cobertura presente nos testes do repositório inclui:
 - teste determinístico com PSK incorreta para um vetor conhecido, sem atribuir ao AES-CTR uma capacidade de autenticação que ele não possui;
 - fuzz target do parser `ServiceEnvelope`, executado por 30 segundos no workflow separado;
 - rejeição de payload MQTT vazio;
-- descarte pelo hook de `Data` com `portnum = 0` ou payload vazio;
+- encaminhamento de `Data` com `portnum = 0` ou payload vazio;
 - aceitação pelo hook de portnum desconhecido quando o payload é válido;
-- preservação do payload original no retorno do hook `OnPublish` nos cenários cobertos.
+- preservação do tópico e payload originais no retorno do hook `OnPublish`, inclusive em falhas de inspeção;
+- encaminhamento de tópicos JSON de downlink sem interpretá-los como `ServiceEnvelope`;
+- teste de integração MQTT/TLS que confirma entrega de `ServiceEnvelope`, `portnum = 0` e tópico JSON a um assinante.
 
-**Limites da cobertura:** o teste de PSK incorreta cobre apenas um vetor fixo e garante que a chave alternativa não recupera aquele `Data` conhecido. AES-CTR não autentica o conteúdo; uma chave errada pode produzir bytes que falham no parsing ou, em alguns casos, dados que ainda podem ser interpretados. Não existe garantia criptográfica de detecção de chave incorreta. O teste de integração conecta dois clientes MQTT ao servidor TLS de teste e verifica a entrega de uma publicação aceita, além de confirmar que uma publicação com `portnum = 0` não chega ao assinante.
+**Limites da cobertura:** o teste de PSK incorreta cobre apenas um vetor fixo e garante que a chave alternativa não recupera aquele `Data` conhecido. AES-CTR não autentica o conteúdo; uma chave errada pode produzir bytes que falham no parsing ou, em alguns casos, dados que ainda podem ser interpretados. Não existe garantia criptográfica de detecção de chave incorreta. O teste de integração conecta dois clientes MQTT ao servidor TLS de teste e verifica a entrega de publicações protobuf e JSON sem que a inspeção local filtre os pacotes.
 
 No commit `fd049bed560d25f81d3fdcd80a06d78df1202740`, a [CI](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38445828267) passou com `gofmt`, `go test ./...`, `go vet ./...`, `go test -race ./...`, `govulncheck` (nenhuma vulnerabilidade alcançável encontrada), build Go, teste de exclusões do contexto Docker, construção e scan da imagem, geração e upload do SBOM CycloneDX e smoke test TLS. O [CodeQL](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38445838203) também passou. O workflow [Fuzz](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38445828477) passou após aproximadamente 869 mil execuções do parser em 30 segundos, sem falha. A imagem-base Go e a imagem Alpine de runtime estão fixadas por digest SHA-256; a CI passou com esses digests. O SBOM CycloneDX é publicado como artefato da execução, com retenção de 30 dias. A validação física multi-nó continua pendente.
 

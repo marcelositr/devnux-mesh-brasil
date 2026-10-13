@@ -60,56 +60,66 @@ func TestMQTTSubscriberReceivesAcceptedPublication(t *testing.T) {
 
 	subscriber := connectTestMQTTClient(t, listener.Address(), tlsConfig, "integration-subscriber")
 	t.Cleanup(func() { _ = subscriber.Close() })
-	subscribeTestMQTTClient(t, subscriber, "msh/test")
+	subscribeTestMQTTClient(t, subscriber, "msh/#")
 
 	publisher := connectTestMQTTClient(t, listener.Address(), tlsConfig, "integration-publisher")
 	t.Cleanup(func() { _ = publisher.Close() })
 
 	const topic = "msh/test"
 
-	// A publication with portnum zero must not reach the MQTT subscriber.
-	ignoredPayload := testEnvelopePayload(t, &meshtastic.Data{
-		Portnum: 0,
-		Payload: []byte("not useful"),
-	})
-	if err := writeMQTTPacket(publisher, 0x30, encodeMQTTString(topic, ignoredPayload)); err != nil {
-		t.Fatalf("não foi possível publicar pacote que deve ser ignorado: %v", err)
-	}
-	if err := subscriber.SetReadDeadline(time.Now().Add(250 * time.Millisecond)); err != nil {
-		t.Fatalf("não foi possível definir timeout para publicação ignorada: %v", err)
-	}
-	if _, _, err := readMQTTPacket(subscriber); err == nil {
-		t.Fatal("assinante recebeu publicação com portnum zero, que deveria ser ignorada")
-	}
-	if err := subscriber.SetReadDeadline(time.Time{}); err != nil {
-		t.Fatalf("não foi possível remover timeout: %v", err)
-	}
-
-	payload := validTestEnvelopePayload(t)
-	if err := writeMQTTPacket(publisher, 0x30, encodeMQTTString(topic, payload)); err != nil {
-		t.Fatalf("não foi possível publicar mensagem MQTT: %v", err)
-	}
-
-	if err := subscriber.SetReadDeadline(time.Now().Add(3 * time.Second)); err != nil {
-		t.Fatalf("não foi possível definir timeout: %v", err)
-	}
-	header, body, err := readMQTTPacket(subscriber)
-	if err != nil {
-		t.Fatalf("assinante não recebeu publicação MQTT: %v", err)
-	}
-	if header>>4 != 3 {
-		t.Fatalf("pacote recebido não é PUBLISH: header=0x%02x", header)
+	// Pacotes com portnum zero, envelopes cifrados válidos e tópicos JSON
+	// devem ser encaminhados sem o broker exigir uma descriptografia local.
+	publications := []struct {
+		name    string
+		topic   string
+		payload []byte
+	}{
+		{
+			name:    "portnum zero",
+			topic:   "msh/test",
+			payload: testEnvelopePayload(t, &meshtastic.Data{Portnum: 0, Payload: []byte("not useful")}),
+		},
+		{
+			name:    "ServiceEnvelope válido",
+			topic:   "msh/test",
+			payload: validTestEnvelopePayload(t),
+		},
+		{
+			name:    "JSON downlink",
+			topic:   "msh/2/json/mqtt/",
+			payload: []byte(`{"from":12345,"type":"sendtext","payload":"integration test"}`),
+		},
 	}
 
-	receivedTopic, receivedPayload, err := decodeMQTTPublish(body)
-	if err != nil {
-		t.Fatalf("não foi possível decodificar PUBLISH recebido: %v", err)
-	}
-	if receivedTopic != topic {
-		t.Fatalf("tópico recebido = %q, esperado %q", receivedTopic, topic)
-	}
-	if !bytes.Equal(receivedPayload, payload) {
-		t.Fatal("payload recebido pelo assinante difere do payload publicado")
+	for _, publication := range publications {
+		t.Run(publication.name, func(t *testing.T) {
+			if err := writeMQTTPacket(publisher, 0x30, encodeMQTTString(publication.topic, publication.payload)); err != nil {
+				t.Fatalf("não foi possível publicar mensagem MQTT: %v", err)
+			}
+			if err := subscriber.SetReadDeadline(time.Now().Add(3 * time.Second)); err != nil {
+				t.Fatalf("não foi possível definir timeout: %v", err)
+			}
+			header, body, err := readMQTTPacket(subscriber)
+			if err != nil {
+				t.Fatalf("assinante não recebeu publicação MQTT: %v", err)
+			}
+			if header>>4 != 3 {
+				t.Fatalf("pacote recebido não é PUBLISH: header=0x%02x", header)
+			}
+			receivedTopic, receivedPayload, err := decodeMQTTPublish(body)
+			if err != nil {
+				t.Fatalf("não foi possível decodificar PUBLISH recebido: %v", err)
+			}
+			if receivedTopic != publication.topic {
+				t.Fatalf("tópico recebido = %q, esperado %q", receivedTopic, publication.topic)
+			}
+			if !bytes.Equal(receivedPayload, publication.payload) {
+				t.Fatalf("payload encaminhado difere da publicação %q", publication.name)
+			}
+			if err := subscriber.SetReadDeadline(time.Time{}); err != nil {
+				t.Fatalf("não foi possível remover timeout: %v", err)
+			}
+		})
 	}
 }
 

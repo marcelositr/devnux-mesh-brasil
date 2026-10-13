@@ -4,7 +4,7 @@
 
 Broker MQTT para receber, validar e processar publicações Meshtastic por MQTT/TLS.
 
-O **DevNux Mesh Brasil** é um projeto de infraestrutura de código aberto. O núcleo atual recebe payloads **ServiceEnvelope** em protobuf, valida os campos necessários, tenta descriptografar o pacote com uma PSK configurada e registra informações sobre os dados processados. O payload MQTT original é preservado no fluxo normal do broker quando a publicação é aceita pelo hook.
+O **DevNux Mesh Brasil** é um projeto de infraestrutura de código aberto. O broker preserva e encaminha publicações MQTT conforme os filtros dos assinantes, incluindo pacotes protobuf Meshtastic, tópicos JSON e outras famílias de tráfego. Para observabilidade, tenta inspecionar tópicos protobuf `ServiceEnvelope` com a PSK local, sem exigir que a descriptografia seja bem-sucedida para encaminhar o payload original.
 
 ## Estado do projeto
 
@@ -16,14 +16,14 @@ O teste físico documentado utilizou um **Heltec Wi-Fi LoRa 32 V4**. A validaç�
 
 - inicia um broker MQTT sobre TLS;
 - aceita conexões e inscrições MQTT;
-- interpreta publicações como ServiceEnvelope protobuf;
-- valida os campos necessários ao processamento;
-- tenta descriptografar o pacote Meshtastic com AES-CTR usando a PSK padrão configurada;
-- interpreta o resultado como Data protobuf;
-- registra mensagens de texto e informações de outros portnums reconhecidos pelo fluxo atual;
+- encaminha publicações MQTT preservando tópico e payload originais;
+- inspeciona, quando possível, ServiceEnvelope protobuf em tópicos de malha atuais e legados;
+- tenta descriptografar pacotes para gerar logs de metadados, sem usar a PSK local como filtro de encaminhamento;
+- preserva tópicos JSON, MapReport, status e outras famílias sem exigir que sejam protobuf de malha;
+- registra metadados de mensagens de texto e outros portnums sem gravar o conteúdo textual;
 - trata sinais de encerramento SIGINT e SIGTERM.
 
-**Limite importante:** o processamento depende da PSK configurada. Publicações que não possam ser descriptografadas ou interpretadas pelo fluxo atual são ignoradas pelo hook. Portanto, não trate a implementação atual como um encaminhador transparente e universal para qualquer canal/PSK Meshtastic.
+**Limite importante:** a PSK configurada serve apenas à inspeção de logs. O broker não cria pacotes LoRa nem transmite diretamente ao rádio; o downlink físico exige um gateway Meshtastic conectado ao broker, com downlink habilitado nos canais relevantes. A configuração atual ainda não implementa autenticação MQTT nem ACL por tópico; mantenha o listener em rede controlada.
 
 A estrutura interna está descrita em [Arquitetura](docs/arquitetura.md), e o comportamento do protocolo em [Protocolo e criptografia](docs/protocolo.md).
 
