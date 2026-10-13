@@ -48,6 +48,9 @@ jobs:
       - name: Build
         run: go build ./cmd/broker
 
+      - name: Testar exclusões de segredos do contexto Docker
+        run: bash scripts/test-dockerignore.sh
+
       - name: Construir imagem Docker sem publicar
         run: docker build -t devnux-mesh-brasil:test .
 
