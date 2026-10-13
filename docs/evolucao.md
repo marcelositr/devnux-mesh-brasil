@@ -6,7 +6,7 @@ Registrar possibilidades de evolução sem transformar hipóteses em requisitos 
 
 ## Correções técnicas em andamento
 
-As duas primeiras correções e o teste de integração foram implementados nesta branch, mas ainda dependem da execução dos testes e da CI para serem considerados verificados:
+A CI no commit `75b59f7` passou em formatação, testes, vet, build Go, build Docker e teste de inicialização do container com validação TLS. O CodeQL também concluiu com sucesso nesse commit. Esses resultados verificam o software automatizado, não a malha física multi-nó:
 
 - **Ciclo de vida do servidor:** `Serve` agora é chamado de forma síncrona e seu erro é tratado antes de o processo aguardar sinais de encerramento.
 - **Logs de mensagens:** o conteúdo textual deixou de ser registrado; o log mantém tópico, cliente, portnum e tamanho do payload. Foi adicionado teste para impedir regressão dessa exposição.
