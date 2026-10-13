@@ -66,6 +66,25 @@ func TestMQTTSubscriberReceivesAcceptedPublication(t *testing.T) {
 	t.Cleanup(func() { _ = publisher.Close() })
 
 	const topic = "msh/test"
+
+	// A publication with portnum zero must not reach the MQTT subscriber.
+	ignoredPayload := testEnvelopePayload(t, &meshtastic.Data{
+		Portnum: 0,
+		Payload: []byte("not useful"),
+	})
+	if err := writeMQTTPacket(publisher, 0x30, encodeMQTTString(topic, ignoredPayload)); err != nil {
+		t.Fatalf("não foi possível publicar pacote que deve ser ignorado: %v", err)
+	}
+	if err := subscriber.SetReadDeadline(time.Now().Add(250 * time.Millisecond)); err != nil {
+		t.Fatalf("não foi possível definir timeout para publicação ignorada: %v", err)
+	}
+	if _, _, err := readMQTTPacket(subscriber); err == nil {
+		t.Fatal("assinante recebeu publicação com portnum zero, que deveria ser ignorada")
+	}
+	if err := subscriber.SetReadDeadline(time.Time{}); err != nil {
+		t.Fatalf("não foi possível remover timeout: %v", err)
+	}
+
 	payload := validTestEnvelopePayload(t)
 	if err := writeMQTTPacket(publisher, 0x30, encodeMQTTString(topic, payload)); err != nil {
 		t.Fatalf("não foi possível publicar mensagem MQTT: %v", err)
@@ -216,15 +235,20 @@ func decodeMQTTPublish(body []byte) (string, []byte, error) {
 
 func validTestEnvelopePayload(t *testing.T) []byte {
 	t.Helper()
+	return testEnvelopePayload(t, &meshtastic.Data{
+		Portnum: 1,
+		Payload: []byte("integration-test-message"),
+	})
+}
+
+func testEnvelopePayload(t *testing.T, data *meshtastic.Data) []byte {
+	t.Helper()
 
 	const (
 		from     = uint32(12345)
 		packetID = uint32(67890)
 	)
-	plain, err := proto.Marshal(&meshtastic.Data{
-		Portnum: 1,
-		Payload: []byte("integration-test-message"),
-	})
+	plain, err := proto.Marshal(data)
 	if err != nil {
 		t.Fatalf("não foi possível serializar Data: %v", err)
 	}
