@@ -13,6 +13,12 @@ O broker utiliza:
 
 A PSK de ambiente deve ser uma string hexadecimal que resulte em 16 ou 32 bytes.
 
+## Limites de entrada e conexões
+
+O projeto usa Mochi MQTT v2.7.9 e não substitui os limites padrão da biblioteca por valores próprios. Nessa versão, o padrão `MaximumPacketSize: 0` significa que não há limite máximo de pacote configurado, e `MaximumClients` começa sem um teto operacional útil para esta aplicação. Não há variáveis de ambiente do projeto para ajustar esses limites.
+
+Por isso, mantenha o listener em uma rede controlada e não considere a configuração atual endurecida para clientes não confiáveis. Valores explícitos devem ser definidos com requisitos de implantação e carga; não escolher limites arbitrários que possam rejeitar tráfego Meshtastic legítimo.
+
 ## TLS
 
 O listener exige TLS 1.2 ou superior.
