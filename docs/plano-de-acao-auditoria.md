@@ -3,7 +3,7 @@
 - **Projeto:** DevNux Mesh Brasil
 - **Branch de trabalho:** `work/finalizacao-projeto`
 - **Base da auditoria:** commit `a6f6672c54f83729872e9591b5863f480c0ad650`
-- **Estado:** plano registrado; itens abaixo ainda precisam ser executados e verificados.
+- **Estado:** Fase 1 em andamento; comportamento de pacotes sem dados úteis implementado e validado por CI/CodeQL no SHA `11af5e650ca84c615d2d884bc05dfa7b1d8e5c38`.
 - **Processo:** trabalhar diretamente na branch de trabalho. Não abrir PRs novos nem fazer merge durante a execução. A integração com `main` será tratada somente no final.
 - **Regra de evidência:** não declarar testes executados sem resultado verificável. Separar testes automatizados, testes de container e validação física com hardware.
 
@@ -28,11 +28,11 @@ Finalizar o software com mudanças pequenas e rastreáveis, comportamento docume
 - [x] Definir o comportamento: ignorar `Data` com `portnum = 0` ou payload vazio; preservar portnums desconhecidos quando o payload for válido.
 - [x] Adicionar testes unitários para descarte de `portnum = 0`/payload vazio e aceitação de portnum desconhecido com payload válido.
 - [x] Adicionar verificação de integração MQTT para confirmar que pacote com `portnum = 0` não chega ao assinante.
-- [ ] Confirmar a execução dos testes no CI após as alterações.
-- [ ] Preservar o teste que garante que o texto das mensagens não aparece nos logs.
-- [ ] Preservar os vetores de interoperabilidade criptográfica.
+- [x] Confirmar CI após as alterações: `gofmt`, `go test ./...`, `go vet ./...`, build Go, build Docker e smoke test Docker/TLS concluíram com sucesso na execução 38424940109.
+- [x] Preservar o teste que garante que o texto das mensagens não aparece nos logs (`TestLogReceivedMessageDoesNotLogTextPayload`).
+- [x] Preservar o vetor de interoperabilidade criptográfica (`TestTransformPacketMatchesInteroperabilityVector`).
 - [ ] Revisar o ciclo de vida do servidor e o encerramento por sinais; alterar somente se houver defeito demonstrável.
-- [ ] Executar formatação, `go test ./...`, `go vet ./...` e build.
+- [x] Confirmar formatação, `go test ./...`, `go vet ./...` e build via CI.
 
 **Critério de saída:** comportamento definido, coberto por testes pertinentes e coerente com a documentação.
 
@@ -65,7 +65,7 @@ Finalizar o software com mudanças pequenas e rastreáveis, comportamento docume
 - [ ] Registrar resultados efetivamente obtidos e itens que continuam pendentes.
 - [ ] Definir os critérios da primeira versão e as instruções de implantação em rede controlada.
 - [ ] Definir um canal de reporte de vulnerabilidades antes de uma distribuição pública mais ampla.
-- [ ] Revisar o PR #10 e decidir a integração com `main) somente depois da conclusão das fases anteriores.
+- [ ] Revisar o PR #10 e decidir a integração com `main` somente depois da conclusão das fases anteriores.
 
 **Critério de saída:** documentação coerente, evidências rastreáveis e revisão final explícita da integração.
 
@@ -88,7 +88,7 @@ Finalizar o software com mudanças pequenas e rastreáveis, comportamento docume
 ### P2 — resolver ou decidir antes do release
 
 3. **Limites de recursos:** avaliar limites de pacote, clientes e recursos pendentes com base no tráfego pretendido.
-4. **Pacotes sem dados úteis:** definir se são ignorados ou encaminhados e testar o comportamento real.
+4. **Pacotes sem dados úteis — resolvido na Fase 1:** são ignorados; portnums desconhecidos com payload válido continuam sendo encaminhados.
 5. **Contexto Docker:** revisar exclusões de arquivos de ambiente e segredos.
 6. **Permissões da chave TLS:** documentar um procedimento compatível com usuário não privilegiado no container.
 7. **AES-CTR sem autenticação:** testar falhas de processamento e documentar limites sem quebrar o protocolo Meshtastic.
@@ -115,12 +115,13 @@ O trabalho de auditoria, testes automatizados e correções não deve ser confun
 
 Atualizar esta seção a cada etapa concluída, com o SHA do commit e links dos resultados:
 
-- **Fase atual:** Fase 1 — testes primeiro, correção do hook aplicada; aguardando validação CI do commit candidato.
+- **Fase atual:** Fase 1 — comportamento e documentação atualizados; CI e CodeQL verdes. Falta revisar ciclo de vida/encerramento do servidor antes de fechar a fase.
 - **SHA inicial da auditoria:** `a6f6672c54f83729872e9591b5863f480c0ad650`.
 - **SHA com testes de regressão antes da implementação:** `8fd8aa9d823693243d29ffb100adfbcc5cc901e1` — CI falhou como esperado em `TestOnPublishIgnoresDataWithoutUsefulPayload`, confirmando o defeito.
-- **SHA candidato com correção e teste de integração:** `7915242603108e825caf9ca9c8f15e58d185aed7` — CI/CodeQL pendentes.
-- **Última CI conhecida:** [execução 38422383137](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38422383137).
-- **Último CodeQL conhecido:** [execução 38422383159](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38422383159).
-- **Próxima ação:** confirmar CI/CodeQL no SHA candidato; se verdes, executar/revisar a suíte final e fechar documentação da Fase 1.
+- **SHA candidato validado:** `11af5e650ca84c615d2d884bc05dfa7b1d8e5c38`.
+- **CI:** [execução 38424940109](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38424940109) — sucesso; job `Testes e qualidade` concluído.
+- **CodeQL:** [execução 38424940149](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38424940149) — sucesso; job `Análise CodeQL` concluído.
+- **Revisão do diff:** comparação com o SHA inicial identificou apenas os seis arquivos previstos para testes, comportamento e documentação.
+- **Próxima ação:** revisar o ciclo de vida do servidor e o encerramento por sinais; depois reavaliar o critério de saída da Fase 1.
 - **Validação física multi-nó:** pendente.
 - **Integração com `main`:** reservada para o final.
