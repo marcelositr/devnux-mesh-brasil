@@ -27,7 +27,7 @@ Este documento descreve a organização do código e o fluxo de uma publicação
 
 O hook atual tenta processar cada publicação como um envelope Meshtastic e usa uma PSK configurada. Publicações que não correspondam ao formato esperado ou não possam ser descriptografadas são ignoradas. Portanto, a implementação atual não deve ser descrita como encaminhador MQTT opaco e universal para quaisquer canais ou PSKs.
 
-O transporte TLS protege a conexão, mas não fornece por si só autenticação MQTT de clientes nem autorização por tópico. A configuração atual não implementa esses controles.
+O processamento criptográfico utiliza AES-CTR, que não autentica nem protege a integridade do payload; não se deve afirmar que toda PSK incorreta será detectada. O transporte TLS protege a conexão, mas não fornece por si só autenticação MQTT de clientes nem autorização por tópico. A configuração atual não implementa esses controles.
 
 ## Princípio arquitetural
 

@@ -13,12 +13,15 @@ A cobertura presente nos testes do repositório inclui:
 - validação do layout do nonce e dos valores de PSK padrão;
 - round-trip AES-CTR e vetor de interoperabilidade com a PSK padrão;
 - rejeição de chave AES com tamanho não suportado;
+- teste determinístico com PSK incorreta para um vetor conhecido, sem atribuir ao AES-CTR uma capacidade de autenticação que ele não possui;
 - rejeição de payload MQTT vazio;
 - descarte pelo hook de `Data` com `portnum = 0` ou payload vazio;
 - aceitação pelo hook de portnum desconhecido quando o payload é válido;
 - preservação do payload original no retorno do hook `OnPublish` nos cenários cobertos.
 
-**Limites da cobertura:** não existe um teste específico que comprove a rejeição de uma PSK incorreta. AES-CTR não autentica o conteúdo; uma chave errada pode produzir bytes que falham no parsing, mas não existe garantia criptográfica de detecção de chave incorreta. Há um teste de integração que conecta dois clientes MQTT ao servidor TLS de teste e verifica a entrega de uma publicação aceita. O teste também verifica que uma publicação com `portnum = 0` não chega ao assinante. No commit `11af5e650ca84c615d2d884bc05dfa7b1d8e5c38`, a [CI](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38424940109) passou, incluindo `gofmt`, `go test ./...`, `go vet ./...`, build Go, build Docker e smoke test de inicialização do container com TLS. O [CodeQL](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38424940149) também passou.
+**Limites da cobertura:** o teste de PSK incorreta cobre apenas um vetor fixo e garante que a chave alternativa não recupera aquele `Data` conhecido. AES-CTR não autentica o conteúdo; uma chave errada pode produzir bytes que falham no parsing ou, em alguns casos, dados que ainda podem ser interpretados. Não existe garantia criptográfica de detecção de chave incorreta. O teste de integração conecta dois clientes MQTT ao servidor TLS de teste e verifica a entrega de uma publicação aceita, além de confirmar que uma publicação com `portnum = 0` não chega ao assinante.
+
+No commit `fbcf0668611fcda621f59dbde50caabbcd61c996`, a [CI](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38443657663) passou com `gofmt`, `go test ./...`, `go vet ./...`, `go test -race ./...`, `govulncheck` (nenhuma vulnerabilidade alcançável encontrada), build Go, teste de exclusões do contexto Docker, construção da imagem, Trivy e smoke test TLS. O [CodeQL](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38443657757) também passou. Esses resultados são do commit indicado; a validação física multi-nó continua pendente.
 
 A lista descreve a cobertura encontrada no código; o resultado de execução confirmado para o commit indicado acima está registrado separadamente pelos links da CI e do CodeQL. A validação física multi-nó continua pendente.
 

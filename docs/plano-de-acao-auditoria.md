@@ -48,29 +48,29 @@ Finalizar o software com mudanças pequenas e rastreáveis, comportamento docume
 - [x] Documentar a recomendação de menor privilégio para a chave TLS montada: chave `0640` restrita a root/grupo dedicado, acesso do grupo no container e bind mount somente leitura.
 - [x] Confirmar CI do smoke test Docker com chave `0640` e grupo correspondente ao usuário `devnux` — sucesso na execução [38429481414](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38429481414).
 - [x] Manter explícita a restrição a redes confiáveis enquanto não houver autenticação MQTT e ACL; consta no README, configuração, desenvolvimento e SECURITY.md.
-- [ ] Testar casos de PSK incorreta e payloads inválidos, documentando o que AES-CTR permite ou não detectar. Teste determinístico de PSK incorreta adicionado em `internal/broker/packet_processor_test.go`; aguardando CI no commit candidato para marcar concluído.
+- [x] Adicionar teste determinístico de PSK incorreta e documentar payloads inválidos e os limites de AES-CTR. O teste não afirma detecção criptográfica geral; CI passou no commit candidato.
 - [ ] Não alterar a criptografia do protocolo Meshtastic sem requisito e evidência de interoperabilidade.
 
 **Critério de saída:** limites e riscos operacionais explícitos; proteções implementadas têm testes correspondentes.
 
 ### Fase 3 — CI, dependências e publicação
 
-- [ ] Revisar o workflow Docker para que a publicação dependa da aprovação das verificações de qualidade.
-- [ ] Aplicar o critério às publicações de `latest`, tags de versão e execuções manuais.
-- [ ] Verificar vulnerabilidades conhecidas nas dependências Go e nas imagens base. Os passos `govulncheck` e Trivy foram adicionados à CI; resultado ainda pendente.
-- [ ] Avaliar a versão da toolchain Go e planejar atualização somente com regressão completa. `go.mod` e a imagem de build foram atualizados para Go 1.27.2 após o `govulncheck` identificar vulnerabilidades na biblioteca padrão corrigidas nessa versão; regressão completa sem o passo diagnóstico ainda pendente.
-- [ ] Fixar as Actions de terceiros por SHA completo; aplicado aos workflows CI, CodeQL e Docker, aguardando validação dos workflows.
+- [x] Revisar o workflow Docker para que a publicação dependa da aprovação das verificações de qualidade.
+- [x] Aplicar o gate às publicações de `latest`, tags de versão e execuções manuais; publicação manual fora de `main` é ignorada.
+- [x] Verificar vulnerabilidades conhecidas nas dependências Go e na imagem Docker. No commit candidato, `govulncheck` não encontrou vulnerabilidades alcançáveis e o scan Trivy passou para os níveis configurados (CRITICAL/HIGH com correção disponível).
+- [x] Atualizar a toolchain Go para 1.27.2 após a identificação de vulnerabilidades alcançáveis na biblioteca padrão 1.27.1; a regressão completa passou.
+- [x] Fixar as Actions de terceiros por SHA completo nos workflows CI, CodeQL e Docker; os workflows passaram após a alteração.
 - [ ] Habilitar/confirmar o reporte privado de vulnerabilidades nas configurações do repositório; a automação disponível não tem permissão para alterar esta configuração.
-- [ ] Executar formatação, testes, race, govulncheck, vet, build Go, CI, CodeQL, scan e smoke test Docker no commit candidato a release.
+- [x] Executar formatação, testes, race, govulncheck, vet, build Go, CI, CodeQL, scan e smoke test Docker no commit candidato `fbcf0668611fcda621f59dbde50caabbcd61c996`.
 - [ ] Revisar o diff integral da branch para confirmar que somente alterações previstas foram incluídas.
 
 **Critério de saída:** commit candidato identificado; CI e CodeQL verdes nesse SHA; imagem construída e testada; publicação condicionada às verificações.
 
 ### Fase 4 — Documentação e release
 
-- [ ] Atualizar README, configuração, protocolo, arquitetura, validação, equipamentos e governança quando o comportamento mudar.
-- [ ] Registrar resultados efetivamente obtidos e itens que continuam pendentes.
-- [ ] Definir os critérios da primeira versão e as instruções de implantação em rede controlada.
+- [x] Atualizar README, configuração, protocolo, arquitetura e validação para refletir comportamento, toolchain e cobertura de testes; equipamentos e governança foram revisados e permanecem coerentes com a fase física pendente.
+- [x] Registrar resultados efetivamente obtidos e itens que continuam pendentes, com links de CI/CodeQL.
+- [x] Documentar critérios técnicos de conclusão e instruções de implantação em rede controlada.
 - [ ] Definir um canal de reporte de vulnerabilidades antes de uma distribuição pública mais ampla.
 - [ ] Revisar o PR #10 e decidir a integração com `main` somente depois da conclusão das fases anteriores.
 
@@ -134,6 +134,6 @@ Atualizar esta seção a cada etapa concluída, com o SHA do commit e links dos 
 - **Progresso Fase 2:** `.dockerignore` atualizado e teste de regressão integrado à CI; o teste de contexto Docker e o smoke test TLS com chave `0640` passaram na [CI 38429481414](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38429481414). O CodeQL estava em andamento na última consulta. Os defaults da biblioteca Mochi MQTT v2.7.9 foram documentados, sem introduzir limites numéricos arbitrários.
 - **Progresso de dimensionamento:** a metodologia de teste de carga foi registrada em `docs/perfil-de-carga.md`; ainda faltam topologia final, captura de tráfego representativa e medições do host.
 - **Próxima ação:** confirmar CI/CodeQL das atualizações documentais; depois, usar dados do hardware e da implantação para preencher o perfil. Só então decidir limites. Não alterar a cifra Meshtastic.
-- **Alterações recentes no branch de trabalho:** teste de PSK incorreta (`5506bd3`); Dependabot para Go, GitHub Actions e Docker (`c50516a`); atualização de Go para 1.27.1 (`66d7592`, `7fe7216`); CI com race, govulncheck, Trivy e Actions pinadas (`b7db4e7`, `f4eeff7`, `5144f11`). Os workflows correspondentes ainda precisam terminar com sucesso no commit candidato final.
+- **Alterações recentes no branch de trabalho:** teste de PSK incorreta (`5506bd3`); Dependabot para Go, GitHub Actions e Docker (`c50516a`); atualização de Go para 1.27.2 (`5e16f1d`, `cf026a6`); CI com race, govulncheck, Trivy e Actions pinadas (`b7db4e7`, `f4eeff7`, `5144f11`). A CI e o CodeQL passaram no candidato `fbcf066`; as mudanças documentais finais serão verificadas em nova execução.
 - **Validação física multi-nó:** pendente.
 - **Integração com `main`:** reservada para o final.

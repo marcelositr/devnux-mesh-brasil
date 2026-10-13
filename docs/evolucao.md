@@ -4,10 +4,12 @@
 
 Registrar possibilidades de evolução sem transformar hipóteses em requisitos automáticos. A decisão atual é concluir e verificar o software com os testes automatizados, de integração, build e Docker que podem ser executados sem comprar ou reunir mais rádios. A validação física com dois ou mais nós fica registrada como etapa posterior, não como bloqueio para esse trabalho. Consulte [Validação](validacao.md) e [Equipamentos e ensaios](equipamentos.md).
 
-## Correções técnicas em andamento
+## Correções técnicas e verificações automatizadas
 
-A CI no commit `75b59f7` passou em formatação, testes, vet, build Go, build Docker e teste de inicialização do container com validação TLS. O CodeQL também concluiu com sucesso nesse commit. Esses resultados verificam o software automatizado, não a malha física multi-nó:
+No commit `fbcf0668611fcda621f59dbde50caabbcd61c996`, a CI passou em formatação, testes, `vet`, detector de condições de corrida, `govulncheck`, build Go, teste de contexto Docker, construção e scan da imagem, e smoke test TLS. O CodeQL também passou. Esses resultados verificam o software automatizado, não a malha física multi-nó:
 
+- **Toolchain Go:** o `govulncheck` inicial detectou seis vulnerabilidades alcançáveis na biblioteca padrão do Go 1.27.1, com correções disponíveis no Go 1.27.2. A toolchain e a imagem de build foram atualizadas para 1.27.2; a execução final do `govulncheck` não encontrou vulnerabilidades alcançáveis.
+- **Cadeia de suprimentos:** as Actions de terceiros nos workflows CI, CodeQL e Docker estão fixadas por SHA completo e o Dependabot verifica atualizações mensais de módulos Go, GitHub Actions e imagens Docker.
 - **Ciclo de vida do servidor:** `Serve` agora é chamado de forma síncrona e seu erro é tratado antes de o processo aguardar sinais de encerramento.
 - **Logs de mensagens:** o conteúdo textual deixou de ser registrado; o log mantém tópico, cliente, portnum e tamanho do payload. Foi adicionado teste para impedir regressão dessa exposição.
 - **Integração MQTT:** foi adicionado teste com dois clientes MQTT sobre TLS, um publicando e outro assinando, para verificar a entrega do payload original.

@@ -42,11 +42,15 @@ TLS cifra o transporte entre cliente e broker, mas a autenticação do servidor 
 
 ## Execução
 
+O `go.mod` declara Go 1.27.0 como versão mínima e fixa a toolchain de validação em Go 1.27.2. O estágio de build do Docker também utiliza `golang:1.27.2-alpine`. Atualizações de toolchain devem ser acompanhadas da regressão completa.
+
 Depois de obter as dependências:
 
 ```bash
 go test ./...
 go vet ./...
+go test -race ./...
+go run golang.org/x/vuln/cmd/govulncheck@latest ./...
 go build -o /tmp/devnux-mesh-broker ./cmd/broker
 ```
 

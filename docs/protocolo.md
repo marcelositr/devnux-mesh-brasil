@@ -48,6 +48,8 @@ Os oito primeiros bytes representam o identificador do pacote em little-endian. 
 
 A mesma transformação AES-CTR é usada para criptografar e descriptografar dados.
 
+**Limite de segurança:** AES-CTR não fornece autenticação nem integridade do conteúdo. O teste com PSK incorreta usa um vetor conhecido para verificar um resultado específico; ele não transforma a cifra em um mecanismo de autenticação nem garante que todas as chaves incorretas sejam detectadas.
+
 ## Após a descriptografia
 
 O resultado é interpretado como `meshtastic.Data`.
