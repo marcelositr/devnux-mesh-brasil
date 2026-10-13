@@ -2,24 +2,35 @@
 
 ## Objetivo
 
-Registrar possibilidades de evolução sem transformar hipóteses em requisitos automáticos. A próxima etapa funcional é concluir os testes com hardware Meshtastic real, incluindo dois ou mais rádios. Consulte [Validação](validacao.md) e [Equipamentos e ensaios](equipamentos.md).
+Registrar possibilidades de evolução sem transformar hipóteses em requisitos automáticos. A decisão atual é concluir e verificar o software com os testes automatizados, de integração, build e Docker que podem ser executados sem comprar ou reunir mais rádios. A validação física com dois ou mais nós fica registrada como etapa posterior, não como bloqueio para esse trabalho. Consulte [Validação](validacao.md) e [Equipamentos e ensaios](equipamentos.md).
 
 ## Correções técnicas identificadas na revisão estática
 
-Os itens abaixo são observações de leitura do código, não resultados de testes de execução. Devem ser avaliados como manutenção técnica separada da lista de funcionalidades futuras:
+Os itens abaixo são observações de leitura do código, não resultados de testes de execução. Devem ser confirmados com testes antes de declarar uma correção concluída:
 
-- **Erro ao iniciar o servidor:** o retorno de Serve é registrado numa goroutine, mas o processo principal continua aguardando SIGINT/SIGTERM. Se Serve terminar com erro, o processo pode permanecer ativo sem serviço funcional. Criar um teste para falha de bind e tratar o erro no ciclo de vida.
-- **Logs de mensagens:** o hook registra o conteúdo integral das mensagens de texto em nível INFO. Avaliar redução ou remoção do conteúdo para limitar exposição de conversas e crescimento dos logs.
+- **Erro ao iniciar o servidor:** o retorno de Serve é registrado numa goroutine, mas o processo principal continua aguardando SIGINT/SIGTERM. Se Serve terminar com erro, o processo pode permanecer ativo sem serviço funcional. Tratar o erro no ciclo de vida e cobrir o comportamento com teste.
+- **Logs de mensagens:** o hook registra o conteúdo integral das mensagens de texto em nível INFO. Remover o conteúdo da mensagem dos logs por padrão para reduzir exposição de conversas e crescimento dos logs.
 - **Teste de integração MQTT:** os testes do hook não substituem um cenário com dois clientes MQTT conectados, um publicando e outro recebendo a publicação. Cobrir esse fluxo em teste automatizado.
 - **Limites de entrada:** verificar e documentar os limites efetivos de tamanho de publicação e conexões na biblioteca MQTT utilizada; não presumir que existam limites específicos configurados pelo projeto.
 
-Esses itens devem ser confirmados por testes antes de declarar uma correção concluída. A revisão estática não executou o broker nem a suíte de testes.
+## Sequência de finalização do software
+
+1. Corrigir afirmações documentais que excedem a cobertura real dos testes.
+2. Tratar o ciclo de vida do servidor quando `Serve` termina com erro e adicionar cobertura automatizada.
+3. Evitar registrar o conteúdo integral de mensagens de texto em logs operacionais.
+4. Criar teste de integração com dois clientes MQTT para comprovar publicação e recebimento.
+5. Verificar limites relevantes de entrada e conexões da biblioteca usada e documentar o que estiver efetivamente configurado.
+6. Executar formatação, testes, `go vet`, build, CI, CodeQL e construção/execução Docker conforme os recursos disponíveis.
+7. Revisar os documentos, exemplos de configuração, segurança, publicação da imagem e critérios de release.
+8. Registrar explicitamente os testes físicos ainda pendentes e os limites de uso da versão finalizada.
 
 ## Regra de evolução
 
 As funcionalidades listadas abaixo são possibilidades, não compromissos. Não implementar um item apenas porque aparece neste documento. Registrar o problema observado, a necessidade, a alternativa escolhida e como a mudança será testada.
 
-## Sequência de validação física
+## Validação física posterior
+
+Quando houver equipamentos disponíveis:
 
 1. Repetir conexão e reconexão do rádio.
 2. Testar com dois ou mais nós e observar uplink/downlink.
@@ -60,8 +71,8 @@ São opções condicionais a uma necessidade operacional demonstrada. Não são 
 
 Não introduzir listas extensas de filtros nem reproduzir regras de encaminhamento de rádio no broker sem requisito técnico concreto e teste de compatibilidade.
 
-## Critério para sair da fase de observação
+## Critério de conclusão
 
-Antes de adotar novas regras de tráfego, verificar estabilidade com hardware, comportamento de uplink/downlink, necessidade real de deduplicação, impacto na compatibilidade e forma de testar a mudança. Itens que não demonstrarem necessidade devem ser descartados.
+O trabalho de software pode ser considerado concluído quando as correções aprovadas estão implementadas, os testes automatizados e de integração passam, vet e build passam, a imagem Docker é validada, a CI relevante está verde, a documentação reflete os limites reais e o diff foi revisado. A validação física multi-nó deve continuar marcada como pendente até que seja executada; não deve ser descrita como aprovada por inferência.
 
-> Primeiro compreender o comportamento real; depois implementar controles justificados por evidência.
+> Primeiro concluir o que pode ser demonstrado por código e testes reproduzíveis; depois validar o comportamento em uma malha física com múltiplos nós.
