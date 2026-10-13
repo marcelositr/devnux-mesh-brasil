@@ -200,7 +200,6 @@ func TestOnPublishAcceptsUnknownPortnumWithPayload(t *testing.T) {
 	}
 }
 
-
 func TestOnPublishForwardsJSONDownlinkWithoutParsingAsServiceEnvelope(t *testing.T) {
 	handler := testHandler()
 	client := &mqtt.Client{ID: "test-client"}
