@@ -20,6 +20,7 @@ func TestDefaultPSK(t *testing.T) {
 
 func TestLoadUsesDefaultPSK(t *testing.T) {
 	t.Setenv("MESHTASTIC_DEFAULT_PSK", "")
+	t.Setenv("MQTT_ZERO_HOP", "")
 
 	cfg, err := Load()
 	if err != nil {
@@ -28,6 +29,10 @@ func TestLoadUsesDefaultPSK(t *testing.T) {
 
 	if !bytes.Equal(cfg.DefaultPSK, crypto.DefaultPSK) {
 		t.Fatalf("Load() não usou a PSK padrão: %x != %x", cfg.DefaultPSK, crypto.DefaultPSK)
+	}
+
+	if !cfg.ZeroHop {
+		t.Fatal("ZeroHop deveria estar habilitado por padrão")
 	}
 
 	if cfg.ListenAddress != ":8883" {
@@ -87,5 +92,23 @@ func TestEnvOrDefault(t *testing.T) {
 	t.Setenv("DEVNUX_TEST_ENV_OR_DEFAULT", "configured")
 	if got := envOrDefault("DEVNUX_TEST_ENV_OR_DEFAULT", "fallback"); got != "configured" {
 		t.Fatalf("valor configurado inesperado: %q", got)
+	}
+}
+
+func TestLoadZeroHopFalse(t *testing.T) {
+	t.Setenv("MQTT_ZERO_HOP", "false")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() retornou erro: %v", err)
+	}
+	if cfg.ZeroHop {
+		t.Fatal("ZeroHop deveria ser false")
+	}
+}
+
+func TestLoadZeroHopInvalid(t *testing.T) {
+	t.Setenv("MQTT_ZERO_HOP", "invalid")
+	if _, err := Load(); err == nil {
+		t.Fatal("Load() deveria rejeitar MQTT_ZERO_HOP inválido")
 	}
 }
