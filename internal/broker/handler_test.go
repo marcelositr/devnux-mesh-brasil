@@ -18,7 +18,7 @@ import (
 
 func testHandler() *Handler {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return NewHandler(logger, config.Config{DefaultPSK: crypto.DefaultPSK})
+	return NewHandler(logger, config.Config{DefaultPSK: crypto.DefaultPSK, ZeroHop: true})
 }
 
 func TestLogReceivedMessageDoesNotLogTextPayload(t *testing.T) {
@@ -83,6 +83,8 @@ func TestOnPublishAcceptsValidEnvelope(t *testing.T) {
 		Portnum: 1,
 		Payload: []byte("hello"),
 	})
+	envelope.GetPacket().HopLimit = 3
+	envelope.GetPacket().HopStart = 3
 	payload, err := proto.Marshal(envelope)
 	if err != nil {
 		t.Fatalf("proto.Marshal() retornou erro: %v", err)
@@ -96,8 +98,15 @@ func TestOnPublishAcceptsValidEnvelope(t *testing.T) {
 	if err != nil {
 		t.Fatalf("OnPublish() retornou erro: %v", err)
 	}
-	if !bytes.Equal(got.Payload, payload) {
-		t.Fatalf("OnPublish() alterou payload")
+	var forwarded meshtastic.ServiceEnvelope
+	if err := proto.Unmarshal(got.Payload, &forwarded); err != nil {
+		t.Fatalf("não foi possível ler o envelope encaminhado: %v", err)
+	}
+	if forwarded.GetPacket().GetHopLimit() != 0 {
+		t.Fatalf("hop_limit = %d, esperado zero", forwarded.GetPacket().GetHopLimit())
+	}
+	if forwarded.GetPacket().GetHopStart() != 3 {
+		t.Fatalf("hop_start = %d, esperado preservar 3", forwarded.GetPacket().GetHopStart())
 	}
 }
 
