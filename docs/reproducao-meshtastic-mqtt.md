@@ -2,55 +2,53 @@
 
 ## Objetivo
 
-Esta etapa reproduz em Go o comportamento efetivamente implementado no projeto de referência meshtastic/mqtt.
+Esta branch implementa em Go o fluxo MQTT inspirado no projeto de referência `meshtastic/mqtt`. A inspeção local de pacotes é observacional: falhas de parsing ou descriptografia não devem interromper o encaminhamento MQTT.
 
-O README do projeto de referência também contém ideias futuras que não fazem parte do comportamento atual. Elas não são tratadas como funcionalidades implementadas.
+## Comportamentos implementados
 
-## Comportamentos reproduzidos
-
-1. Broker MQTT.
-2. Apenas endpoint MQTT criptografado na porta 8883.
-3. TLS 1.2 como protocolo mínimo.
-4. Conexões aceitas sem autenticação adicional.
-5. Inscrições MQTT aceitas sem filtragem adicional.
-6. Bloqueio de payload vazio.
-7. Decodificação de ServiceEnvelope em protobuf.
-8. Validação dos campos essenciais do envelope.
-9. Descriptografia do pacote de canal usando AES-CTR.
-10. Decodificação do resultado como Data.
-11. Registro de mensagens de texto e de outros portnums.
+1. Broker MQTT com endpoint TLS na porta 8883.
+2. TLS 1.2 como protocolo mínimo.
+3. Conexões aceitas sem autenticação MQTT adicional.
+4. Inscrições MQTT aceitas sem filtragem adicional.
+5. Encaminhamento de publicações MQTT, inclusive JSON e payloads que não possam ser inspecionados localmente.
+6. Inspeção de `ServiceEnvelope` protobuf nos tópicos Meshtastic reconhecidos (`msh/2/e/...` e `msh/2/c/...`).
+7. Validação dos campos essenciais do envelope antes da inspeção criptográfica.
+8. Descriptografia AES-CTR com nonce compatível com o formato Meshtastic implementado no pacote `internal/crypto`.
+9. Decodificação do resultado como `Data` e registro de metadados de portnum.
+10. Preservação da publicação original quando protobuf, validação, descriptografia ou decodificação falham.
+11. Política zero-hop opcional via `MESHTASTIC_ZERO_HOP=true`; desativada por padrão.
 12. Encerramento mediante SIGINT ou SIGTERM.
 
-## Diferenças deliberadas
+## Diferenças deliberadas em relação ao comportamento anterior desta branch
 
-- O certificado PFX e a senha existentes no projeto de referência não foram copiados.
-- A configuração do certificado foi externalizada por variáveis de ambiente.
-- A implementação usa bibliotecas Go em vez das bibliotecas .NET originais.
-- A estrutura de código foi separada em pacotes para manter o código testável e idiomático.
+- O handler anterior tentava decodificar toda publicação como `ServiceEnvelope` e retornava `CodeSuccessIgnore` em falhas de parsing ou descriptografia. Isso podia impedir a entrega MQTT de payloads JSON e de pacotes cuja PSK não estivesse disponível localmente. O handler atualizado inspeciona apenas tópicos protobuf reconhecidos e mantém a publicação no fluxo MQTT em caso de falha de inspeção.
+- A inspeção local não comprova que um rádio recebeu, descriptografou ou retransmitiu a mensagem. Isso exige testes de interoperabilidade com hardware.
+- O certificado PFX e a senha existentes no projeto de referência não foram copiados; certificado e chave privada TLS são configurados por variáveis de ambiente.
+- A PSK pode ser configurada por `MESHTASTIC_DEFAULT_PSK` em hexadecimal ou Base64 padrão, desde que resulte em 16 ou 32 bytes. A PSK não é a mesma coisa que a proteção TLS do transporte MQTT.
+- `MESHTASTIC_ZERO_HOP` habilita uma transformação opcional de `hop_limit`. A configuração permanece desativada por padrão.
 
-## Pontos que precisam de validação
+## Criptografia e limites
 
-A compatibilidade criptográfica deve ser validada com um pacote real produzido pelo Meshtastic ou com vetores de teste confiáveis.
+A implementação utiliza AES-CTR e uma disposição de nonce validada por teste de interoperabilidade C# registrado em `internal/crypto/crypto_test.go`. Isso não substitui a validação com um pacote real capturado de uma rede Meshtastic e com rádios físicos.
 
-O projeto de referência usa NonceGenerator da biblioteca Meshtastic para construir o nonce. A implementação Go reproduz a estrutura de 16 bytes usada pelo AES-CTR, confirmada pelo vetor de interoperabilidade C# e pelos testes automatizados de criptografia.
+AES-CTR não autentica o conteúdo por si só. Uma descriptografia com PSK incorreta pode produzir bytes que não formam um `Data` protobuf válido. Por isso, a falha de decodificação é tratada como falha de inspeção local, não como evidência conclusiva de corrupção do transporte.
 
-## Fora do escopo atual
-
-As seguintes ideias aparecem no README de referência, mas não estão implementadas no código analisado:
-
-- rate limiting;
-- bloqueio de pacotes repetidos;
-- rate limiting por nó;
-- zero hopping;
-- bloqueio de tópicos desconhecidos;
-- bloqueio de pacotes não descriptografáveis;
-- filtragem de portnums;
-- fail2ban;
-- banimento de atores.
-
+Não há seleção de PSK por `channel_id`; a configuração atual usa uma única PSK local para a tentativa de descriptografia. A PSK local pode não corresponder à chave do canal.
 
 ## Tópicos MQTT
 
-O projeto de referência não aplica filtragem ou validação específica sobre o nome do tópico no interceptor de publicação. O broker Go mantém o mesmo comportamento: o tópico é aceito e utilizado apenas no registro da mensagem.
+O broker não filtra tópicos desconhecidos nem converte JSON automaticamente em um pacote Meshtastic. Publicar um objeto como `{"from":...,"type":"sendtext","payload":"..."}` em `msh/2/json/mqtt/` não cria, por si só, um `ServiceEnvelope` criptografado nem faz downlink para um rádio.
 
-Também não foi introduzida seleção de PSK por `channel_id`. O projeto de referência usa diretamente a PSK padrão na descriptografia, portanto esta reprodução mantém a mesma semântica.
+Para observar envelopes publicados no canal `ITUVERAVA`, um assinante pode usar o filtro `msh/2/e/ITUVERAVA/#`. A recepção de uma publicação pelo assinante comprova entrega MQTT, não transmissão LoRa.
+
+## Fora do escopo desta etapa
+
+Ainda não implementados: rate limiting, deduplicação, rate limiting por nó, bloqueio de tópicos desconhecidos, bloqueio de pacotes não descriptografáveis, filtragem de portnums, fail2ban e banimento de atores.
+
+## Critérios de validação pendentes
+
+- `go test ./...`, `go vet ./...` e build no estado atualizado da branch.
+- Verificar que payload JSON em `msh/2/json/mqtt/` é encaminhado intacto.
+- Verificar que envelopes protobuf inválidos ou não descriptografáveis não são descartados pelo hook.
+- Verificar publicação e assinatura nos tópicos do canal de teste.
+- Validar downlink e recepção no rádio com hardware real, com PSK e configuração MQTT do dispositivo confirmadas.
