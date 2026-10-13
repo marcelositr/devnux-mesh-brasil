@@ -88,7 +88,7 @@ func (h *Handler) OnPublish(client *mqtt.Client, packet packets.Packet) (packets
 // logReceivedMessage registra mensagens de texto separadamente dos demais portnums.
 func (h *Handler) logReceivedMessage(topic, clientID string, data *meshtastic.Data) {
 	if data != nil && int32(data.GetPortnum()) == 1 {
-		h.logger.Info("mensagem de texto recebida", "topic", topic, "client_id", clientID, "message", string(data.GetPayload()))
+		h.logger.Info("mensagem de texto recebida", "topic", topic, "client_id", clientID, "portnum", int32(data.GetPortnum()), "payload_bytes", len(data.GetPayload()))
 		return
 	}
 
