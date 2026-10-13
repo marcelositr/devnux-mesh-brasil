@@ -19,8 +19,9 @@ A cobertura presente nos testes do repositório inclui:
 - encaminhamento de `Data` com `portnum = 0` ou payload vazio;
 - aceitação pelo hook de portnum desconhecido quando o payload é válido;
 - preservação do tópico e dos campos de payload no hook `OnPublish`, incluindo falhas de inspeção, com reescrita de `hop_limit` quando zero-hop está ativo;
-- encaminhamento de tópicos JSON de downlink sem interpretá-los como `ServiceEnvelope`;
-- teste de integração MQTT/TLS que confirma entrega de `ServiceEnvelope`, `portnum = 0` e tópico JSON a um assinante.
+- encaminhamento de tópicos JSON sem interpretá-los como `ServiceEnvelope` (pass-through MQTT; não comprova downlink físico JSON);
+- testes do hook para portnums representativos: texto, posição, NodeInfo, roteamento, waypoint, telemetria, vizinhos e faixa de aplicações privadas, sem filtragem por tipo;
+- teste de integração MQTT/TLS que confirma entrega de `ServiceEnvelope`, `portnum = 0` e tópico JSON a um assinante; o caso JSON valida apenas o pass-through do broker.
 
 **Limites da cobertura:** o teste de PSK incorreta cobre apenas um vetor fixo e garante que a chave alternativa não recupera aquele `Data` conhecido. AES-CTR não autentica o conteúdo; uma chave errada pode produzir bytes que falham no parsing ou, em alguns casos, dados que ainda podem ser interpretados. Não existe garantia criptográfica de detecção de chave incorreta. O teste de integração conecta dois clientes MQTT ao servidor TLS de teste e verifica a entrega de publicações protobuf e JSON sem que a inspeção local filtre os pacotes.
 
@@ -89,7 +90,7 @@ A documentação disponível registra testes automatizados, um teste Docker e um
 
 - funcionamento em uma malha Meshtastic real com múltiplos nós;
 - estabilidade prolongada;
-- compatibilidade com todos os tipos de payload ou portnums;
+- compatibilidade semântica e transmissão física de todos os tipos de payload ou portnums; os testes representativos verificam encaminhamento opaco, não decodificação de cada payload;
 - suporte transparente a canais com PSKs diferentes;
 - autenticação de clientes MQTT ou autorização por tópico;
 - validação em hardware real da política zero-hop implementada no broker;
