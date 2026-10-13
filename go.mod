@@ -1,8 +1,8 @@
 module github.com/marcelositr/devnux-mesh-brasil
 
-go 1.27.0
+go 1.27.2
 
-toolchain go1.27.1
+toolchain go1.27.2
 
 require (
 	github.com/kmpm/meshtastic-protobufs.go/v2 v2.0.0-20250523091512-a65806dfbdb7
