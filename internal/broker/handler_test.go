@@ -209,6 +209,49 @@ func TestOnPublishAcceptsUnknownPortnumWithPayload(t *testing.T) {
 	}
 }
 
+func TestOnPublishForwardsRepresentativePortnums(t *testing.T) {
+	tests := []struct {
+		name   string
+		portnum meshtastic.PortNum
+	}{
+		{name: "text", portnum: 1},
+		{name: "position GPS", portnum: 3},
+		{name: "node info", portnum: 4},
+		{name: "routing ACK", portnum: 5},
+		{name: "waypoint", portnum: 8},
+		{name: "telemetry", portnum: 67},
+		{name: "neighbor info", portnum: 71},
+		{name: "private application", portnum: 256},
+		{name: "upper private range", portnum: 511},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler := testHandler()
+			client := &mqtt.Client{ID: "test-client"}
+			envelope := testEnvelope(t, &meshtastic.Data{
+				Portnum: tt.portnum,
+				Payload: []byte("opaque representative payload"),
+			})
+			payload, err := proto.Marshal(envelope)
+			if err != nil {
+				t.Fatalf("proto.Marshal() retornou erro: %v", err)
+			}
+
+			got, err := handler.OnPublish(client, packets.Packet{
+				TopicName: "msh/2/e/LongFast/!abcd1234",
+				Payload:   payload,
+			})
+			if err != nil {
+				t.Fatalf("OnPublish() rejeitou portnum %d: %v", tt.portnum, err)
+			}
+			if !bytes.Equal(got.Payload, payload) {
+				t.Fatalf("OnPublish() alterou payload do portnum %d", tt.portnum)
+			}
+		})
+	}
+}
+
 func TestOnPublishForwardsJSONDownlinkWithoutParsingAsServiceEnvelope(t *testing.T) {
 	handler := testHandler()
 	client := &mqtt.Client{ID: "test-client"}
