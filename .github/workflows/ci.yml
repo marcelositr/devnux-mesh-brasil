@@ -50,3 +50,46 @@ jobs:
 
       - name: Construir imagem Docker sem publicar
         run: docker build -t devnux-mesh-brasil:test .
+
+      - name: Testar inicialização da imagem Docker com TLS
+        shell: bash
+        run: |
+          set -euo pipefail
+          cert_dir="$RUNNER_TEMP/devnux-certs"
+          mkdir -p "$cert_dir"
+          openssl req -x509 -newkey rsa:2048 -nodes \
+            -keyout "$cert_dir/private.key" \
+            -out "$cert_dir/certificate.pem" \
+            -subj "/CN=127.0.0.1" \
+            -addext "subjectAltName=IP:127.0.0.1" \
+            -days 1
+          # Chave efêmera exclusiva do job: legível pelo usuário não-root do container.
+          chmod 644 "$cert_dir/private.key" "$cert_dir/certificate.pem"
+
+          docker run -d --rm \
+            --name devnux-mesh-broker-smoke \
+            -p 127.0.0.1:18883:8883 \
+            -v "$cert_dir:/etc/devnux/certs:ro" \
+            devnux-mesh-brasil:test
+
+          cleanup() {
+            docker stop devnux-mesh-broker-smoke >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          tls_log="$RUNNER_TEMP/devnux-tls-smoke.log"
+          for attempt in $(seq 1 20); do
+            timeout 3 openssl s_client \
+              -connect 127.0.0.1:18883 \
+              -CAfile "$cert_dir/certificate.pem" \
+              -verify_return_error -brief </dev/null >"$tls_log" 2>&1 || true
+            if grep -q "Verification: OK" "$tls_log" && grep -q "Protocol version: TLSv1" "$tls_log"; then
+              cat "$tls_log"
+              exit 0
+            fi
+            sleep 1
+          done
+
+          docker logs devnux-mesh-broker-smoke || true
+          cat "$tls_log"
+          exit 1
