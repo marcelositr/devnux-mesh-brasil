@@ -1,9 +1,11 @@
 package config
 
 import (
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"os"
+	"strconv"
 )
 
 type Config struct {
@@ -11,6 +13,7 @@ type Config struct {
 	CertificateFile string
 	PrivateKeyFile  string
 	DefaultPSK      []byte
+	ZeroHop         bool
 }
 
 func Load() (Config, error) {
@@ -29,6 +32,14 @@ func Load() (Config, error) {
 		cfg.DefaultPSK = psk
 	}
 
+	if value := os.Getenv("MESHTASTIC_ZERO_HOP"); value != "" {
+		enabled, err := strconv.ParseBool(value)
+		if err != nil {
+			return Config{}, fmt.Errorf("MESHTASTIC_ZERO_HOP inválido: %w", err)
+		}
+		cfg.ZeroHop = enabled
+	}
+
 	return cfg, nil
 }
 
@@ -41,18 +52,28 @@ func defaultPSK() []byte {
 	}
 }
 
+// parsePSK accepts the hexadecimal format used by previous versions and
+// standard Base64, as commonly displayed by Meshtastic for 256-bit keys.
 func parsePSK(value string) ([]byte, error) {
-	psk, err := hex.DecodeString(value)
-	if err != nil {
-		return nil, fmt.Errorf("esperado hexadecimal: %w", err)
+	if psk, err := hex.DecodeString(value); err == nil {
+		if validPSKSize(psk) {
+			return psk, nil
+		}
 	}
 
-	switch len(psk) {
-	case 16, 32:
+	psk, base64Err := base64.StdEncoding.DecodeString(value)
+	if base64Err == nil && validPSKSize(psk) {
 		return psk, nil
-	default:
-		return nil, fmt.Errorf("tamanho inválido: esperado 16 ou 32 bytes, recebido %d", len(psk))
 	}
+
+	if base64Err != nil {
+		return nil, fmt.Errorf("esperado hexadecimal ou Base64 válido de 16 ou 32 bytes")
+	}
+	return nil, fmt.Errorf("tamanho inválido: esperado 16 ou 32 bytes, recebido %d", len(psk))
+}
+
+func validPSKSize(psk []byte) bool {
+	return len(psk) == 16 || len(psk) == 32
 }
 
 func envOrDefault(name, fallback string) string {
