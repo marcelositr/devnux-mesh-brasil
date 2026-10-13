@@ -1,35 +1,45 @@
-# Governança do projeto
+# Governança do DevNux Mesh Brasil
 
-Esta pasta contém as regras, princípios e decisões que orientam a evolução do Meshtastic MQTT Brasil.
+Esta pasta registra o propósito, os princípios e as decisões que orientam a evolução do projeto. A governança não substitui a documentação técnica: ela define como decisões são tomadas e preservadas; a documentação técnica descreve o comportamento implementado; o código deve corresponder ao comportamento verificável.
 
-Ela não é documentação operacional comum. Seu conteúdo define os limites dentro dos quais o projeto deve evoluir.
+## Como usar esta pasta
 
-## Regra de proteção
+Antes de uma alteração arquitetural ou de segurança:
 
-Nenhuma ferramenta automatizada, incluindo Inteligência Artificial, deve modificar arquivos desta pasta como consequência automática de uma tarefa de implementação.
+1. leia [Projeto e escopo](projeto.md);
+2. consulte [Princípios](principios.md);
+3. procure decisões existentes em [Decisões](decisoes/README.md);
+4. descreva o problema e as alternativas;
+5. obtenha decisão humana explícita;
+6. registre a decisão e atualize os documentos técnicos afetados;
+7. valide o resultado de acordo com [Guia de desenvolvimento](../docs/desenvolvimento.md).
 
-Mudanças na governança devem ser intencionais, justificadas e registradas separadamente.
+## Documentos
 
-## Hierarquia
+- [Projeto e escopo](projeto.md): propósito, público e limites atuais.
+- [Princípios](principios.md): critérios duradouros para escolhas técnicas.
+- [Arquitetura conceitual](arquitetura.md): responsabilidades e limites da arquitetura.
+- [Regras para uso de IA](regras-ia.md): limites e responsabilidades de ferramentas automatizadas.
+- [Registro de decisões](decisoes/README.md): índice de decisões arquiteturais e operacionais.
 
-1. Propósito e princípios do projeto.
-2. Regras de governança.
-3. Decisões arquiteturais registradas.
-4. Documentação técnica.
-5. Implementação.
+## Hierarquia prática
 
-A implementação deve respeitar as decisões vigentes. Quando uma decisão precisar ser alterada, a mudança deve ser documentada antes ou junto da implementação correspondente.
+1. Decisões explícitas do mantenedor e requisitos confirmados.
+2. Decisões registradas e ainda vigentes.
+3. Princípios do projeto.
+4. Documentação técnica atualizada com o comportamento observado.
+5. Implementação e testes, que devem ser inspecionados para confirmar o comportamento real.
 
-## Conteúdo
+Se a documentação contradisser o código, não se deve presumir que um deles está correto sem investigação. Registre a divergência e resolva-a de forma explícita.
 
-- `projeto.md` — finalidade e limites do projeto.
-- `principios.md` — princípios permanentes.
-- `regras-ia.md` — regras para uso de IA.
-- `arquitetura.md` — arquitetura conceitual aprovada.
-- `decisoes/` — registro histórico de decisões importantes.
+## Alterações de governança
 
-## Regra de preservação
+Mudanças em GOVERNANCE/ devem ser intencionais, revisáveis e justificadas. Ferramentas automatizadas não devem modificar estes documentos como efeito colateral de uma tarefa de implementação. Uma solicitação explícita do mantenedor, como uma revisão dedicada da própria governança, autoriza a revisão documental, mas não autoriza a ferramenta a decidir unilateralmente o rumo do projeto.
 
-Nenhum documento de governança deve ser apagado apenas porque deixou de refletir a situação atual. Quando uma decisão for substituída, seu registro deve permanecer no histórico e a nova decisão deve explicar a mudança.
+Decisões substituídas devem permanecer no histórico; atualize seu estado e registre a decisão sucessora em vez de apagar o registro anterior.
 
-> A governança protege a coerência do projeto; a documentação técnica explica como ele funciona; o código implementa o que foi decidido.
+## Regra de evidência
+
+Não registrar uma hipótese como decisão aprovada, nem um teste planejado como teste concluído. Quando faltarem evidências, usar estados explícitos como **proposto**, **pendente**, **observado** ou **validado**, explicando o alcance da afirmação.
+
+> A governança protege a coerência e a rastreabilidade do projeto, não a burocracia pela burocracia.
