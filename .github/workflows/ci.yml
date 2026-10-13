@@ -66,8 +66,13 @@ jobs:
             -subj "/CN=127.0.0.1" \
             -addext "subjectAltName=IP:127.0.0.1" \
             -days 1
-          # Chave efêmera exclusiva do job: legível pelo usuário não-root do container.
-          chmod 644 "$cert_dir/private.key" "$cert_dir/certificate.pem"
+          # O arquivo da chave só pode ser lido por seu proprietário e grupo.
+          # O GID do grupo primário do usuário do container é usado no host para o bind mount.
+          container_gid="$(docker run --rm --entrypoint sh devnux-mesh-brasil:test -c 'id -g devnux')"
+          sudo chgrp "$container_gid" "$cert_dir/private.key"
+          chmod 640 "$cert_dir/private.key"
+          chmod 644 "$cert_dir/certificate.pem"
+          test "$(stat -c '%a' "$cert_dir/private.key")" = "640"
 
           docker run -d --rm \
             --name devnux-mesh-broker-smoke \
