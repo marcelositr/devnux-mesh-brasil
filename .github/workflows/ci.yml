@@ -40,6 +40,11 @@ jobs:
             exit 1
           fi
 
+      - name: Diagnóstico temporário de consistência do go.mod
+        run: |
+          go mod tidy
+          git diff -- go.mod go.sum
+
       - name: Testes
         run: go test ./...
 
