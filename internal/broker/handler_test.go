@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"testing"
 
+	meshtastic "github.com/kmpm/meshtastic-protobufs.go/v2/generated"
 	mqtt "github.com/mochi-mqtt/server/v2"
 	"github.com/mochi-mqtt/server/v2/packets"
-	meshtastic "github.com/kmpm/meshtastic-protobufs.go/v2/generated"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/marcelositr/devnux-mesh-brasil/internal/config"
