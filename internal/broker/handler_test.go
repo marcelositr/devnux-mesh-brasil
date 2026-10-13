@@ -46,10 +46,10 @@ func TestOnPublishForwardsEmptyPayload(t *testing.T) {
 	client := &mqtt.Client{ID: "test-client"}
 
 	got, err := handler.OnPublish(client, packets.Packet{
-		TopicName: "msh/test",
+		TopicName: "msh/2/e/LongFast/!abcd1234",
 	})
 
-	if err != nil
+	if err != nil {
 		t.Fatalf("OnPublish() deveria encaminhar payload sem erro, recebeu %v", err)
 	}
 	if got.Payload != nil {
@@ -63,12 +63,12 @@ func TestOnPublishForwardsInvalidProtobuf(t *testing.T) {
 	payload := []byte{0xff, 0xff, 0xff}
 
 	got, err := handler.OnPublish(client, packets.Packet{
-		TopicName: "msh/test",
+		TopicName: "msh/2/e/LongFast/!abcd1234",
 		Payload:   payload,
 	})
 
-	if err != packets.CodeSuccessIgnore {
-		t.Fatalf("OnPublish() erro = %v, want %v", err, packets.CodeSuccessIgnore)
+	if err != nil {
+		t.Fatalf("OnPublish() deveria encaminhar protobuf inválido sem erro, recebeu %v", err)
 	}
 	if !bytes.Equal(got.Payload, payload) {
 		t.Fatalf("OnPublish() alterou payload: %x != %x", got.Payload, payload)
@@ -89,7 +89,7 @@ func TestOnPublishAcceptsValidEnvelope(t *testing.T) {
 	}
 
 	got, err := handler.OnPublish(client, packets.Packet{
-		TopicName: "msh/test",
+		TopicName: "msh/2/e/LongFast/!abcd1234",
 		Payload:   payload,
 	})
 
@@ -122,11 +122,11 @@ func TestOnPublishForwardsEnvelopeWhenDecryptionCannotDecodeData(t *testing.T) {
 	}
 
 	got, err := handler.OnPublish(client, packets.Packet{
-		TopicName: "msh/test",
+		TopicName: "msh/2/e/LongFast/!abcd1234",
 		Payload:   payload,
 	})
 
-	if err != packets.CodeSuccessIgnore {
+	if err != nil {
 		t.Fatalf("OnPublish() deveria preservar o envelope quando a descriptografia falha: %v", err)
 	}
 	if !bytes.Equal(got.Payload, payload) {
@@ -163,10 +163,10 @@ func TestOnPublishForwardsDataWithoutUsefulPayload(t *testing.T) {
 			}
 
 			got, result := handler.OnPublish(client, packets.Packet{
-				TopicName: "msh/test",
+				TopicName: "msh/2/e/LongFast/!abcd1234",
 				Payload:   payload,
 			})
-			if result != nil
+			if result != nil {
 				t.Fatalf("OnPublish() deveria encaminhar Data sem payload útil, recebeu %v", result)
 			}
 			if !bytes.Equal(got.Payload, payload) {
@@ -189,7 +189,7 @@ func TestOnPublishAcceptsUnknownPortnumWithPayload(t *testing.T) {
 	}
 
 	got, result := handler.OnPublish(client, packets.Packet{
-		TopicName: "msh/test",
+		TopicName: "msh/2/e/LongFast/!abcd1234",
 		Payload:   payload,
 	})
 	if result != nil {
