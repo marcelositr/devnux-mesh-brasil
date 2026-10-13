@@ -36,6 +36,8 @@ O certificado e a chave privada são carregados por:
 
 A chave privada nunca deve ser adicionada ao repositório. O `.gitignore` e o `.dockerignore` excluem `certs/`, arquivos de ambiente locais e extensões comuns de certificados/chaves. O `.dockerignore` preserva `.env.example` como exemplo não secreto. Para verificar as exclusões do contexto Docker, execute `bash scripts/test-dockerignore.sh` com Docker instalado.
 
+A CI testa o acesso à chave montada com permissão `0640`, usando o GID do grupo primário do usuário `devnux` no container. Em uma implantação real, reproduza o princípio de menor privilégio com o grupo configurado no host; o GID numérico precisa corresponder a um grupo efetivo do processo no container. A CI não substitui a verificação das permissões e da propriedade no host de implantação.
+
 TLS cifra o transporte entre cliente e broker, mas a autenticação do servidor depende de o cliente validar o certificado apresentado. Um teste com certificado autoassinado e validação de certificado desabilitada confirma a negociação TLS, mas não comprova a identidade do servidor. Para ambientes além de testes locais, configure uma cadeia de confiança adequada e verifique que o cliente valida o certificado.
 
 ## Execução
