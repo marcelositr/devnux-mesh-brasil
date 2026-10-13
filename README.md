@@ -40,7 +40,7 @@ A PSK fornecida por ambiente deve ser hexadecimal e resultar em 16 ou 32 bytes. 
 
 ## Docker
 
-A imagem usa build multi-stage e executa o binário como usuário sem privilégios. O certificado e a chave privada são fornecidos em tempo de execução, não embutidos na imagem.
+A imagem usa build multi-stage, fixa as imagens-base por digest SHA-256 e executa o binário como usuário sem privilégios. O certificado e a chave privada são fornecidos em tempo de execução, não embutidos na imagem.
 
 Construção local: **docker build -t devnux-mesh-brasil .**
 
@@ -66,7 +66,7 @@ Fuzzing direcionado do parser protobuf (30 segundos):
 
     go test ./internal/broker -fuzz=FuzzParseServiceEnvelope -fuzztime=30s -parallel=2
 
-A CI verifica formatação, testes, `vet`, detector de condições de corrida, vulnerabilidades Go alcançáveis, build Go, exclusões de segredos no contexto Docker, construção da imagem, vulnerabilidades críticas/altas conhecidas na imagem (ignorando as sem correção disponível) e inicialização TLS do container. As Actions de terceiros usadas nos workflows são fixadas por SHA completo. O resultado precisa ser confirmado na execução do commit candidato; a presença dos passos não significa, por si só, que passaram.
+A CI verifica formatação, testes, `vet`, detector de condições de corrida, vulnerabilidades Go alcançáveis, build Go, exclusões de segredos no contexto Docker, construção e scan da imagem, geração de SBOM CycloneDX e inicialização TLS do container. O workflow [Fuzz](.github/workflows/fuzz.yml) executa fuzzing direcionado do parser `ServiceEnvelope`. As Actions de terceiros estão fixadas por SHA completo e as imagens-base por digest SHA-256. Confirme sempre os resultados na execução do commit candidato.
 
 Consulte [Guia de desenvolvimento](docs/desenvolvimento.md) e [Validação](docs/validacao.md) para distinguir cobertura existente de execuções efetivamente confirmadas.
 

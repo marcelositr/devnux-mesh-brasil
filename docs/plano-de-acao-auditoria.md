@@ -3,7 +3,7 @@
 - **Projeto:** DevNux Mesh Brasil
 - **Branch de trabalho:** `work/finalizacao-projeto`
 - **Base da auditoria:** commit `a6f6672c54f83729872e9591b5863f480c0ad650`
-- **Estado:** verificações automatizáveis das Fases 2 e 3 concluídas e aprovadas em CI/CodeQL/Fuzz no candidato `8af16e8`; documentação e critérios de release revisados. Restam uma configuração manual de reporte privado no GitHub e a decisão explícita sobre merge do PR #10. A Fase 5 (hardware e carga real) fica para depois. Meta de planejamento: até 200 rádios, sem tratar isso como capacidade comprovada nem converter diretamente rádios em conexões MQTT.
+- **Estado:** verificações automatizáveis das Fases 2 e 3 e documentação da Fase 4 concluídas; CI, CodeQL e Fuzz passaram no candidato `fd049be`. Restam ativar manualmente o reporte privado de vulnerabilidades no GitHub e obter autorização explícita para merge do PR #10. A Fase 5 (hardware e carga real) fica para depois. Meta de planejamento: até 200 rádios, sem tratar isso como capacidade comprovada nem converter diretamente rádios em conexões MQTT.
 - **Processo:** trabalhar diretamente na branch de trabalho. Não abrir PRs novos nem fazer merge durante a execução. A integração com `main` será tratada somente no final.
 - **Regra de evidência:** não declarar testes executados sem resultado verificável. Separar testes automatizados, testes de container e validação física com hardware.
 
@@ -59,8 +59,8 @@ Não alterar a criptografia do protocolo Meshtastic sem requisito e evidência d
 - [x] Fixar por digest SHA-256 as imagens-base Go 1.27.2-alpine e Alpine 3.22; o build, scan e smoke test passaram.
 - [x] Gerar SBOM CycloneDX da imagem Docker e publicar como artefato de CI com retenção de 30 dias.
 - [ ] Habilitar/confirmar o reporte privado de vulnerabilidades nas configurações do repositório; a automação disponível não tem permissão para alterar esta configuração.
-- [x] Executar formatação, testes, race, govulncheck, vet, build Go, CI, CodeQL, scan, SBOM e smoke test Docker no candidato `8af16e89ec2b522fcf887f5b836b6eace47d1fcc`.
-- [x] Revisar a lista integral de arquivos alterados entre `main` e `work/finalizacao-projeto`; os 23 arquivos alterados correspondem às correções, testes, workflows, segurança e documentação previstas no plano. A validação final do diff permanece ligada ao commit candidato e não inclui scripts locais não rastreados.
+- [x] Executar formatação, testes, race, govulncheck, vet, build Go, CI, CodeQL, fuzzing, scan, SBOM e smoke test Docker no candidato `fd049bed560d25f81d3fdcd80a06d78df1202740`.
+- [x] Revisar a lista integral de arquivos alterados entre `main` e `work/finalizacao-projeto`; os 25 arquivos alterados correspondem às correções, testes, workflows, segurança e documentação previstas no plano. A validação final do diff permanece ligada ao commit candidato e não inclui scripts locais não rastreados.
 
 **Critério de saída:** commit candidato identificado; CI e CodeQL verdes nesse SHA; imagem construída e testada; publicação condicionada às verificações.
 
@@ -124,7 +124,7 @@ O trabalho de auditoria, testes automatizados e correções não deve ser confun
 
 Atualizar esta seção a cada etapa concluída, com o SHA do commit e links dos resultados:
 
-- **Fase atual:** trabalho automatizável das Fases 2, 3 e 4 concluído e verificado no candidato `8af16e8`. A Fase 5 (medições de carga e validação física multi-rádio) permanece explicitamente posterior.
+- **Fase atual:** trabalho automatizável das Fases 2, 3 e 4 concluído e verificado no candidato `fd049be`. A Fase 5 (medições de carga e validação física multi-rádio) permanece explicitamente posterior.
 - **SHA inicial da auditoria:** `a6f6672c54f83729872e9591b5863f480c0ad650`.
 - **SHA com testes de regressão antes da implementação:** `8fd8aa9d823693243d29ffb100adfbcc5cc901e1` — CI falhou como esperado em `TestOnPublishIgnoresDataWithoutUsefulPayload`, confirmando o defeito.
 - **SHA candidato validado:** `11af5e650ca84c615d2d884bc05dfa7b1d8e5c38`.
@@ -136,7 +136,7 @@ Atualizar esta seção a cada etapa concluída, com o SHA do commit e links dos 
 - **Progresso Fase 2:** teste de PSK incorreta adicionado com ressalva explícita de que AES-CTR não autentica conteúdo; restrição de rede controlada documentada; CI atual passou no teste de contexto Docker e no smoke test TLS com chave `0640`. Os defaults do Mochi MQTT v2.7.9 estão documentados; não foram introduzidos limites numéricos arbitrários.
 - **Progresso de dimensionamento:** a metodologia de teste de carga foi registrada em `docs/perfil-de-carga.md`; ainda faltam topologia final, captura de tráfego representativa e medições do host.
 - **Próximas ações:** habilitar/confirmar o reporte privado de vulnerabilidades nas configurações do GitHub e decidir explicitamente se o PR #10 deve ser integrado. Perfil de carga e limites numéricos foram movidos para a Fase 5, pois dependem de tráfego real e medições. Não alterar a cifra Meshtastic.
-- **Candidato automatizado validado:** `8af16e89ec2b522fcf887f5b836b6eace47d1fcc` — [CI](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38445485210), [CodeQL](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38445492503) e [Fuzz](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38445485274) passaram. A CI gerou o SBOM CycloneDX como artefato.
+- **Candidato automatizado validado:** `fd049bed560d25f81d3fdcd80a06d78df1202740` — [CI](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38445828267), [CodeQL](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38445838203) e [Fuzz](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38445828477) passaram. A CI gerou o SBOM CycloneDX como artefato.
 - **Validação física multi-nó:** pendente.
 - **PR #10:** revisado; não foi feito merge. A integração fica pendente de autorização explícita.
 - **Reporte privado de vulnerabilidades:** ainda requer ativação manual em [Settings → Security](https://github.com/marcelositr/devnux-mesh-brasil/settings/security_analysis).
