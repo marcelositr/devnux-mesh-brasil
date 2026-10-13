@@ -80,6 +80,10 @@ func (h *Handler) OnPublish(client *mqtt.Client, packet packets.Packet) (packets
 		h.logger.Warn("não foi possível interpretar o pacote criptografado", "topic", packet.TopicName, "client_id", client.ID, "erro", err)
 		return packet, packets.CodeSuccessIgnore
 	}
+	if data == nil {
+		h.logger.Debug("pacote sem dados úteis ignorado", "topic", packet.TopicName, "client_id", client.ID)
+		return packet, packets.CodeSuccessIgnore
+	}
 
 	h.logReceivedMessage(packet.TopicName, client.ID, data)
 	return packet, nil
