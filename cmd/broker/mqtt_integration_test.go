@@ -71,6 +71,7 @@ func TestMQTTSubscriberReceivesAcceptedPublication(t *testing.T) {
 
 	// Pacotes com portnum zero, envelopes cifrados válidos e tópicos JSON
 	// devem ser encaminhados sem o broker exigir uma descriptografia local.
+	// O caso JSON comprova apenas o pass-through MQTT, não o downlink físico do firmware.
 	publications := []struct {
 		name    string
 		topic   string
@@ -87,7 +88,7 @@ func TestMQTTSubscriberReceivesAcceptedPublication(t *testing.T) {
 			payload: validTestEnvelopePayload(t),
 		},
 		{
-			name:    "JSON downlink",
+			name:    "JSON topic pass-through",
 			topic:   "msh/2/json/mqtt/",
 			payload: []byte(`{"from":12345,"type":"sendtext","payload":"integration test"}`),
 		},
