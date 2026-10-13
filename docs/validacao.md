@@ -26,7 +26,7 @@ O histórico de validação do projeto registra uma construção local com o com
 
 A imagem iniciou como usuário sem privilégios. Durante o ensaio inicial, a chave privada montada com permissão 0600 não pôde ser lida pelo usuário do container; o teste foi repetido ajustando o acesso de grupo sem remover o usuário não-root.
 
-Também foi registrado um teste de publicação MQTT/TLS com um ServiceEnvelope válido, processado e descriptografado no container. O log de exemplo registrado na ocasião foi:
+Também foi registrado um teste de publicação MQTT/TLS com um ServiceEnvelope válido, processado e descriptografado no container. O log de exemplo registrado na ocasião foi, antes da alteração que removeu o texto das mensagens dos logs:
 
     mensagem de texto recebida
     topic=docker/teste
