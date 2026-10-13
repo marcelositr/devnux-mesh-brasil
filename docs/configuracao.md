@@ -17,7 +17,7 @@ A PSK de ambiente deve ser uma string hexadecimal que resulte em 16 ou 32 bytes.
 
 O projeto usa Mochi MQTT v2.7.9 e não substitui os limites padrão da biblioteca por valores próprios. Nessa versão, o padrão `MaximumPacketSize: 0` significa que não há limite máximo de pacote configurado, e `MaximumClients` começa sem um teto operacional útil para esta aplicação. Não há variáveis de ambiente do projeto para ajustar esses limites.
 
-Por isso, mantenha o listener em uma rede controlada e não considere a configuração atual endurecida para clientes não confiáveis. Valores explícitos devem ser definidos com requisitos de implantação e carga; não escolher limites arbitrários que possam rejeitar tráfego Meshtastic legítimo.
+Por isso, mantenha o listener em uma rede controlada e não considere a configuração atual endurecida para clientes não confiáveis. A meta inicial de planejamento é uma rede de até 200 rádios, mas isso não é uma capacidade comprovada nem significa 200 conexões MQTT: rádios podem publicar por meio de gateways. Valores explícitos devem ser definidos após examinar a documentação da versão de Mochi MQTT utilizada e executar testes com um perfil de carga representativo; não escolher limites arbitrários que possam rejeitar tráfego Meshtastic legítimo.
 
 ## TLS
 
