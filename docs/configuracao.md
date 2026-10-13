@@ -64,7 +64,7 @@ O processo encerra de forma controlada ao receber SIGINT ou SIGTERM.
 
 ## Docker
 
-O projeto possui um `Dockerfile` de múltiplas etapas que compila o broker e cria uma imagem de runtime mínima.
+O projeto possui um `Dockerfile` de múltiplas etapas que compila o broker e cria uma imagem de runtime mínima. As imagens-base do compilador Go e do runtime Alpine são fixadas por digest SHA-256, além das tags de versão. O Dependabot monitora atualizações mensais do ecossistema Docker; atualizações de digest devem passar pela CI completa.
 
 ### Imagem publicada
 

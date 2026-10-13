@@ -2,7 +2,7 @@
 
 ## Relato responsável
 
-Não publique detalhes de vulnerabilidades como issues públicas. O canal preferido é o recurso privado de reporte de vulnerabilidades do GitHub, que precisa estar habilitado nas configurações de Security do repositório. A disponibilidade dessa configuração não pôde ser alterada por esta automação; o mantenedor deve confirmar/ativar **Private vulnerability reporting** em Settings → Security e verificar que a opção de reporte aparece na página Security. Até isso ser confirmado, não há um canal dedicado publicamente documentado: não envie detalhes sensíveis por issue pública.
+Não publique detalhes de vulnerabilidades como issues públicas. O canal preferido é o recurso privado de reporte de vulnerabilidades do GitHub, que precisa estar habilitado nas [configurações de segurança do repositório](https://github.com/marcelositr/devnux-mesh-brasil/settings/security_analysis). A disponibilidade dessa configuração não pôde ser alterada por esta automação; o mantenedor deve confirmar/ativar **Private vulnerability reporting** em Settings → Security e verificar que a opção de reporte aparece na página Security. Até isso ser confirmado, não há um canal dedicado publicamente documentado: não envie detalhes sensíveis por issue pública.
 
 Ao relatar, inclua, quando possível:
 
