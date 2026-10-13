@@ -22,10 +22,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Configurar Go
-        uses: actions/setup-go@v7
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
         with:
           go-version-file: go.mod
           cache: true
@@ -46,6 +46,12 @@ jobs:
       - name: Vet
         run: go vet ./...
 
+      - name: Testes com detector de condições de corrida
+        run: go test -race ./...
+
+      - name: Verificar vulnerabilidades alcançáveis nas dependências Go
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
       - name: Build
         run: go build ./cmd/broker
 
@@ -54,6 +60,16 @@ jobs:
 
       - name: Construir imagem Docker sem publicar
         run: docker build -t devnux-mesh-brasil:test .
+
+      - name: Verificar vulnerabilidades da imagem Docker
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: devnux-mesh-brasil:test
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
 
       - name: Testar inicialização da imagem Docker com TLS
         shell: bash
