@@ -211,7 +211,7 @@ func TestOnPublishAcceptsUnknownPortnumWithPayload(t *testing.T) {
 
 func TestOnPublishForwardsRepresentativePortnums(t *testing.T) {
 	tests := []struct {
-		name   string
+		name    string
 		portnum meshtastic.PortNum
 	}{
 		{name: "text", portnum: 1},
