@@ -41,7 +41,8 @@ Finalizar o software com mudanças pequenas e rastreáveis, comportamento docume
 - [x] Consultar a documentação oficial do Mochi MQTT v2.7.9: `MaximumPacketSize: 0` não limita o pacote MQTT; `MaximumClientWritesPending` tem padrão 8192 por cliente; `MaximumClients` não impõe um teto operacional útil. Registrado em `docs/configuracao.md`.
 - [ ] Definir limites de tamanho de pacote, clientes e recursos pendentes após medir envelopes reais, frequência de publicação e consumo sob carga para a meta de planejamento de até 200 rádios; não escolher valores arbitrários.
 - [ ] Definir o modelo de conexão da rede (rádios conectados diretamente ou por gateways), pois o número de rádios não equivale necessariamente ao número de clientes MQTT.
-- [ ] Elaborar um perfil de carga representativo e medir memória/CPU/latência antes de declarar capacidade suportada.
+- [x] Documentar a metodologia para coletar tráfego real e testar conexões, carga normal, pico observado, assinantes lentos e reconexões em `docs/perfil-de-carga.md`.
+- [ ] Coletar dados reais de tamanho/frequência dos envelopes e medir memória/CPU/latência antes de declarar capacidade suportada.
 - [ ] Se forem definidos limites, configurar e testar os limites no broker.
 - [x] Revisar `.dockerignore` para excluir arquivos `.env`, certificados, chaves e diretórios locais de segredos, preservando `.env.example`; o teste de regressão `scripts/test-dockerignore.sh` foi adicionado à CI. A execução da CI ainda precisa ser confirmada.
 - [x] Documentar a recomendação de menor privilégio para a chave TLS montada: chave `0640` restrita a root/grupo dedicado, acesso do grupo no container e bind mount somente leitura.
@@ -129,6 +130,7 @@ Atualizar esta seção a cada etapa concluída, com o SHA do commit e links dos 
 - **Revisão do ciclo de vida:** `cmd/broker/main.go` já lida com falha de inicialização e encerramento por `SIGINT`/`SIGTERM`; nenhum defeito demonstrável encontrado, sem alteração de código.
 - **Decisão registrada:** planejar inicialmente para uma rede de até 200 rádios. Não definir limites de pacote/conexões até examinar a documentação da versão Mochi MQTT usada e estabelecer perfil de carga plausível.
 - **Progresso Fase 2:** `.dockerignore` atualizado e teste de regressão integrado à CI; o teste de contexto Docker e o smoke test TLS com chave `0640` passaram na [CI 38429481414](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38429481414). O CodeQL estava em andamento na última consulta. Os defaults da biblioteca Mochi MQTT v2.7.9 foram documentados, sem introduzir limites numéricos arbitrários.
-- **Próxima ação:** confirmar CodeQL para o commit final de documentação; depois, estabelecer o perfil de carga e a topologia MQTT antes de definir limites. Não alterar a cifra Meshtastic.
+- **Progresso de dimensionamento:** a metodologia de teste de carga foi registrada em `docs/perfil-de-carga.md`; ainda faltam topologia final, captura de tráfego representativa e medições do host.
+- **Próxima ação:** confirmar CI/CodeQL das atualizações documentais; depois, usar dados do hardware e da implantação para preencher o perfil. Só então decidir limites. Não alterar a cifra Meshtastic.
 - **Validação física multi-nó:** pendente.
 - **Integração com `main`:** reservada para o final.
