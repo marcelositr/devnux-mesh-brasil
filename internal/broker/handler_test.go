@@ -143,6 +143,51 @@ func TestOnPublishForwardsEnvelopeWhenDecryptionCannotDecodeData(t *testing.T) {
 	}
 }
 
+func TestOnPublishLogsWhenDecryptionFails(t *testing.T) {
+	var logs bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&logs, nil))
+	handler := NewHandler(logger, config.Config{DefaultPSK: crypto.DefaultPSK})
+	client := &mqtt.Client{ID: "test-client"}
+
+	envelope := &meshtastic.ServiceEnvelope{
+		ChannelId: "ITUVERAVA",
+		GatewayId: "gateway",
+		Packet: &meshtastic.MeshPacket{
+			Id:   1,
+			From: 2,
+			PayloadVariant: &meshtastic.MeshPacket_Encrypted{
+				Encrypted: []byte{1, 2, 3, 4},
+			},
+		},
+	}
+	payload, err := proto.Marshal(envelope)
+	if err != nil {
+		t.Fatalf("proto.Marshal() retornou erro: %v", err)
+	}
+
+	got, err := handler.OnPublish(client, packets.Packet{
+		TopicName: "msh/2/e/ITUVERAVA/!abcd1234",
+		Payload:   payload,
+	})
+	if err != nil {
+		t.Fatalf("OnPublish() deveria preservar publicação não descriptografável: %v", err)
+	}
+	if !bytes.Equal(got.Payload, payload) {
+		t.Fatal("OnPublish() alterou o payload original")
+	}
+
+	output := logs.String()
+	if !strings.Contains(output, "pacote Meshtastic recebido; sem descriptografia local") {
+		t.Fatalf("esperava log INFO para falha de descriptografia, obtido: %q", output)
+	}
+	if !strings.Contains(output, "msh/2/e/ITUVERAVA/!abcd1234") {
+		t.Fatalf("o log não identificou o tópico recebido: %q", output)
+	}
+	if strings.Contains(output, string([]byte{1, 2, 3, 4})) {
+		t.Fatalf("o log não deve expor o payload criptografado: %q", output)
+	}
+}
+
 func TestOnPublishForwardsDataWithoutUsefulPayload(t *testing.T) {
 	tests := []struct {
 		name string
