@@ -141,6 +141,17 @@ Atualizar esta seção a cada etapa concluída, com o SHA do commit e links dos 
 - **PR #10:** revisado; não foi feito merge. A integração fica pendente de autorização explícita.
 - **Reporte privado de vulnerabilidades:** ainda requer ativação manual em [Settings → Security](https://github.com/marcelositr/devnux-mesh-brasil/settings/security_analysis).
 
+## Retomada da auditoria — 13/10/2026
+
+- **Branch verificada:** `work/finalizacao-projeto`.
+- **Commit verificado:** `6afbb65372922177c713405c056091f758e2e892`.
+- **PR #10:** continua aberto, com estado de merge `clean`; não foi integrado em `main`.
+- **CI do commit verificado:** [execução 38459207119](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38459207119) — sucesso.
+- **CodeQL:** [execução 38459207143](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38459207143) — sucesso.
+- **Fuzz do parser:** [execução 38459203258](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38459203258) — sucesso.
+- **Conclusão da revisão:** não há falha automatizada pendente nas execuções consultadas. Permanecem pendentes a ativação/confirmação do reporte privado de vulnerabilidades pelo proprietário, a autorização explícita para merge e a validação física multi-nó/carga real. A ausência de autenticação MQTT e ACL continua limitando o uso a redes controladas.
+- **Escopo desta retomada:** leitura do estado remoto, revisão do PR, workflows, testes de integração e documentação. Nenhuma publicação de imagem nem merge foi executado.
+
 ## Atualização — 13/10/2026: correções incrementais iniciadas
 
 As alterações abaixo foram aplicadas diretamente em `work/finalizacao-projeto`. A validação automatizada do estado final destas alterações ainda está pendente; não considerar os itens validados até que os workflows concluam.
