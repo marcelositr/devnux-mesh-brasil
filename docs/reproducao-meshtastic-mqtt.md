@@ -27,7 +27,11 @@ Esta branch implementa em Go o fluxo MQTT inspirado no projeto de referência `m
 - A PSK pode ser configurada por `MESHTASTIC_DEFAULT_PSK` em hexadecimal ou Base64 padrão, desde que resulte em 16 ou 32 bytes. A PSK não é a mesma coisa que a proteção TLS do transporte MQTT.
 - `MESHTASTIC_ZERO_HOP` habilita uma transformação opcional de `hop_limit`. A configuração permanece desativada por padrão.
 
-## Criptografia e limites
+## Segurança do transporte e limites
+
+O listener aceita conexões MQTT sem autenticação adicional. TLS protege o transporte, mas não identifica nem autoriza cada cliente. Restrinja a porta 8883 por firewall/rede confiável e não exponha esta branch diretamente à Internet sem uma camada de autenticação e controles de acesso avaliados separadamente.
+
+Certificados, chaves privadas, arquivos de ambiente e binários locais são excluídos pelo `.gitignore`. Nunca registre nem versione uma PSK de implantação.
 
 A implementação utiliza AES-CTR e uma disposição de nonce validada por teste de interoperabilidade C# registrado em `internal/crypto/crypto_test.go`. Isso não substitui a validação com um pacote real capturado de uma rede Meshtastic e com rádios físicos.
 
