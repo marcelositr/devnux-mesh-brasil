@@ -2,24 +2,37 @@
 
 ## Objetivo
 
-Registrar possibilidades de evolução sem transformar hipóteses em requisitos automáticos. A próxima etapa funcional é concluir os testes com hardware Meshtastic real, incluindo dois ou mais rádios. Consulte [Validação](validacao.md) e [Equipamentos e ensaios](equipamentos.md).
+Registrar possibilidades de evolução sem transformar hipóteses em requisitos automáticos. A decisão atual é concluir e verificar o software com os testes automatizados, de integração, build e Docker que podem ser executados sem comprar ou reunir mais rádios. A validação física com dois ou mais nós fica registrada como etapa posterior, não como bloqueio para esse trabalho. Consulte [Validação](validacao.md) e [Equipamentos e ensaios](equipamentos.md).
 
-## Correções técnicas identificadas na revisão estática
+## Correções técnicas e verificações automatizadas
 
-Os itens abaixo são observações de leitura do código, não resultados de testes de execução. Devem ser avaliados como manutenção técnica separada da lista de funcionalidades futuras:
+No commit `fd049bed560d25f81d3fdcd80a06d78df1202740`, a CI passou em formatação, testes, `vet`, detector de condições de corrida, `govulncheck`, build Go, teste de contexto Docker, construção e scan da imagem, geração/upload do SBOM CycloneDX e smoke test TLS. O CodeQL também passou. O workflow de fuzzing direcionado completou aproximadamente 869 mil execuções sem falha. As imagens-base do Docker estão fixadas por digest SHA-256 e a CI passou após essa mudança. Esses resultados verificam o software automatizado, não a malha física multi-nó:
 
-- **Erro ao iniciar o servidor:** o retorno de Serve é registrado numa goroutine, mas o processo principal continua aguardando SIGINT/SIGTERM. Se Serve terminar com erro, o processo pode permanecer ativo sem serviço funcional. Criar um teste para falha de bind e tratar o erro no ciclo de vida.
-- **Logs de mensagens:** o hook registra o conteúdo integral das mensagens de texto em nível INFO. Avaliar redução ou remoção do conteúdo para limitar exposição de conversas e crescimento dos logs.
-- **Teste de integração MQTT:** os testes do hook não substituem um cenário com dois clientes MQTT conectados, um publicando e outro recebendo a publicação. Cobrir esse fluxo em teste automatizado.
-- **Limites de entrada:** verificar e documentar os limites efetivos de tamanho de publicação e conexões na biblioteca MQTT utilizada; não presumir que existam limites específicos configurados pelo projeto.
+- **Toolchain Go:** o `govulncheck` inicial detectou seis vulnerabilidades alcançáveis na biblioteca padrão do Go 1.27.1, com correções disponíveis no Go 1.27.2. A toolchain e a imagem de build foram atualizadas para 1.27.2; a execução final do `govulncheck` não encontrou vulnerabilidades alcançáveis.
+- **Cadeia de suprimentos:** as Actions de terceiros nos workflows CI, CodeQL, Docker e Fuzz estão fixadas por SHA completo; o Dependabot verifica atualizações mensais de módulos Go, GitHub Actions e imagens Docker. A CI agora gera um artefato SBOM CycloneDX da imagem.
+- **Ciclo de vida do servidor:** `Serve` agora é chamado de forma síncrona e seu erro é tratado antes de o processo aguardar sinais de encerramento.
+- **Logs de mensagens:** o conteúdo textual deixou de ser registrado; o log mantém tópico, cliente, portnum e tamanho do payload. Foi adicionado teste para impedir regressão dessa exposição.
+- **Integração MQTT:** foi adicionado teste com dois clientes MQTT sobre TLS, um publicando e outro assinando, para verificar a entrega do payload original.
+- **Limites de entrada:** verificado na documentação/código da Mochi MQTT v2.7.9 e registrado em [Configuração e execução](configuracao.md): o projeto não define limite próprio de tamanho de pacote ou número de clientes. Definir limites numéricos fica condicionado aos requisitos de implantação e carga.
 
-Esses itens devem ser confirmados por testes antes de declarar uma correção concluída. A revisão estática não executou o broker nem a suíte de testes.
+## Sequência de finalização do software
+
+1. Corrigir afirmações documentais que excedem a cobertura real dos testes.
+2. Executar e validar o tratamento de erros no ciclo de vida do servidor.
+3. Executar o teste de regressão que garante que logs não exponham o texto das mensagens.
+4. Executar o teste de integração MQTT com dois clientes e corrigir qualquer falha encontrada.
+5. Confirmar se a implantação pretendida exige limites explícitos de pacote e clientes; até haver requisitos, manter a restrição de rede documentada e não inventar valores.
+6. Executar formatação, testes, `go vet`, build, CI, CodeQL e construção/execução Docker conforme os recursos disponíveis.
+7. Revisar os documentos, exemplos de configuração, segurança, publicação da imagem e critérios de release.
+8. Registrar explicitamente os testes físicos ainda pendentes e os limites de uso da versão finalizada.
 
 ## Regra de evolução
 
 As funcionalidades listadas abaixo são possibilidades, não compromissos. Não implementar um item apenas porque aparece neste documento. Registrar o problema observado, a necessidade, a alternativa escolhida e como a mudança será testada.
 
-## Sequência de validação física
+## Validação física posterior
+
+Quando houver equipamentos disponíveis:
 
 1. Repetir conexão e reconexão do rádio.
 2. Testar com dois ou mais nós e observar uplink/downlink.
@@ -60,8 +73,8 @@ São opções condicionais a uma necessidade operacional demonstrada. Não são 
 
 Não introduzir listas extensas de filtros nem reproduzir regras de encaminhamento de rádio no broker sem requisito técnico concreto e teste de compatibilidade.
 
-## Critério para sair da fase de observação
+## Critério de conclusão
 
-Antes de adotar novas regras de tráfego, verificar estabilidade com hardware, comportamento de uplink/downlink, necessidade real de deduplicação, impacto na compatibilidade e forma de testar a mudança. Itens que não demonstrarem necessidade devem ser descartados.
+O trabalho de software pode ser considerado concluído quando as correções aprovadas estão implementadas, os testes automatizados e de integração passam, vet e build passam, a imagem Docker é validada, a CI relevante está verde, a documentação reflete os limites reais e o diff foi revisado. A validação física multi-nó deve continuar marcada como pendente até que seja executada; não deve ser descrita como aprovada por inferência.
 
-> Primeiro compreender o comportamento real; depois implementar controles justificados por evidência.
+> Primeiro concluir o que pode ser demonstrado por código e testes reproduzíveis; depois validar o comportamento em uma malha física com múltiplos nós.

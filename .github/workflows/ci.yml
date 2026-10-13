@@ -1,11 +1,13 @@
 name: CI
 
 on:
+  workflow_call:
   push:
     branches:
       - main
       - "dev/**"
       - "refactor/**"
+      - "work/**"
   pull_request:
     branches:
       - main
@@ -20,10 +22,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Configurar Go
-        uses: actions/setup-go@v7
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
         with:
           go-version-file: go.mod
           cache: true
@@ -44,5 +46,99 @@ jobs:
       - name: Vet
         run: go vet ./...
 
+      - name: Testes com detector de condições de corrida
+        run: go test -race ./...
+
+      - name: Verificar vulnerabilidades alcançáveis nas dependências Go
+        shell: bash
+        run: |
+          set -euo pipefail
+          govulncheck_version="$(tr -d '[:space:]' < .github/govulncheck-version)"
+          if [[ ! "$govulncheck_version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Versão inválida em .github/govulncheck-version"
+            exit 1
+          fi
+          echo "Executando govulncheck ${govulncheck_version}"
+          go run "golang.org/x/vuln/cmd/govulncheck@${govulncheck_version}" ./...
+
       - name: Build
         run: go build ./cmd/broker
+
+      - name: Testar exclusões de segredos do contexto Docker
+        run: bash scripts/test-dockerignore.sh
+
+      - name: Construir imagem Docker sem publicar
+        run: docker build -t devnux-mesh-brasil:test .
+
+      - name: Verificar vulnerabilidades da imagem Docker
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: devnux-mesh-brasil:test
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+
+      - name: Gerar SBOM CycloneDX da imagem Docker
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: devnux-mesh-brasil:test
+          format: cyclonedx
+          output: sbom.cdx.json
+          exit-code: '0'
+          vuln-type: os,library
+
+      - name: Publicar artefato SBOM
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: devnux-mesh-brasil-sbom-${{ github.sha }}
+          path: sbom.cdx.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Testar inicialização da imagem Docker com TLS
+        shell: bash
+        run: |
+          set -euo pipefail
+          cert_dir="$RUNNER_TEMP/devnux-certs"
+          mkdir -p "$cert_dir"
+          openssl req -x509 -newkey rsa:2048 -nodes \
+            -keyout "$cert_dir/private.key" \
+            -out "$cert_dir/certificate.pem" \
+            -subj "/CN=127.0.0.1" \
+            -addext "subjectAltName=IP:127.0.0.1" \
+            -days 1
+          # O arquivo da chave só pode ser lido por seu proprietário e grupo.
+          # O GID do grupo primário do usuário do container é usado no host para o bind mount.
+          container_gid="$(docker run --rm --entrypoint sh devnux-mesh-brasil:test -c 'id -g devnux')"
+          sudo chgrp "$container_gid" "$cert_dir/private.key"
+          chmod 755 "$cert_dir"
+          chmod 640 "$cert_dir/private.key"
+          chmod 644 "$cert_dir/certificate.pem"
+          test "$(stat -c '%a' "$cert_dir/private.key")" = "640"
+
+          docker run -d \
+            --name devnux-mesh-broker-smoke \
+            -p 127.0.0.1:18883:8883 \
+            -v "$cert_dir:/etc/devnux/certs:ro" \
+            devnux-mesh-brasil:test
+
+          trap 'docker rm -f devnux-mesh-broker-smoke >/dev/null 2>&1 || true' EXIT
+
+          tls_log="$RUNNER_TEMP/devnux-tls-smoke.log"
+          for _ in $(seq 1 20); do
+            timeout 3 openssl s_client \
+              -connect 127.0.0.1:18883 \
+              -CAfile "$cert_dir/certificate.pem" \
+              -verify_return_error -brief </dev/null >"$tls_log" 2>&1 || true
+            if grep -q "Verification: OK" "$tls_log" && grep -q "Protocol version: TLSv1" "$tls_log"; then
+              cat "$tls_log"
+              exit 0
+            fi
+            sleep 1
+          done
+
+          docker logs devnux-mesh-broker-smoke || true
+          cat "$tls_log"
+          exit 1

@@ -168,6 +168,26 @@ func TestDecryptMeshPacketReturnsErrorForInvalidCiphertext(t *testing.T) {
 	}
 }
 
+func TestDecryptMeshPacketWithWrongPSKDoesNotRecoverKnownPayload(t *testing.T) {
+	// AES-CTR não autentica o conteúdo: uma PSK errada não precisa gerar erro.
+	// Este teste só garante que, para este vetor fixo, a chave incorreta não
+	// recupera o Data conhecido; não é uma garantia criptográfica geral.
+	envelope := testEnvelope(t, &meshtastic.Data{
+		Portnum: 1,
+		Payload: []byte("known payload"),
+	})
+	wrongPSK := []byte("0123456789abcdef")
+	processor := newPacketProcessor(wrongPSK)
+
+	got, err := processor.decryptMeshPacket(envelope)
+	if err == nil && proto.Equal(got, &meshtastic.Data{
+		Portnum: 1,
+		Payload: []byte("known payload"),
+	}) {
+		t.Fatal("PSK incorreta recuperou o payload conhecido")
+	}
+}
+
 func TestDecryptMeshPacketReturnsNilForUnknownData(t *testing.T) {
 	processor := testProcessor()
 	envelope := testEnvelope(t, &meshtastic.Data{Portnum: 0, Payload: []byte("unknown")})

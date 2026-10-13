@@ -4,7 +4,7 @@
 
 Broker MQTT para receber, validar e processar publicações Meshtastic por MQTT/TLS.
 
-O **DevNux Mesh Brasil** é um projeto de infraestrutura de código aberto. O núcleo atual recebe payloads **ServiceEnvelope** em protobuf, valida os campos necessários, tenta descriptografar o pacote com uma PSK configurada e registra informações sobre os dados processados. O payload MQTT original é preservado no fluxo normal do broker quando a publicação é aceita pelo hook.
+O **DevNux Mesh Brasil** é um projeto de infraestrutura de código aberto. O broker encaminha publicações MQTT conforme os filtros dos assinantes, incluindo pacotes protobuf Meshtastic, tópicos JSON e outras famílias de tráfego. Para observabilidade, tenta inspecionar tópicos protobuf `ServiceEnvelope` com a PSK local, sem exigir que a descriptografia seja bem-sucedida para encaminhá-los. Por padrão, reescreve apenas `MeshPacket.hop_limit` para zero em envelopes protobuf reconhecidos, preservando `hop_start`.
 
 ## Estado do projeto
 
@@ -16,14 +16,14 @@ O teste físico documentado utilizou um **Heltec Wi-Fi LoRa 32 V4**. A validaç�
 
 - inicia um broker MQTT sobre TLS;
 - aceita conexões e inscrições MQTT;
-- interpreta publicações como ServiceEnvelope protobuf;
-- valida os campos necessários ao processamento;
-- tenta descriptografar o pacote Meshtastic com AES-CTR usando a PSK padrão configurada;
-- interpreta o resultado como Data protobuf;
-- registra mensagens de texto e informações de outros portnums reconhecidos pelo fluxo atual;
+- encaminha publicações MQTT preservando os tópicos e os campos do payload, exceto pela reescrita de `hop_limit` quando a política zero-hop está ativa;
+- inspeciona, quando possível, ServiceEnvelope protobuf em tópicos de malha atuais e legados;
+- tenta descriptografar pacotes para gerar logs de metadados, sem usar a PSK local como filtro de encaminhamento;
+- preserva tópicos JSON, MapReport, status e outras famílias sem exigir que sejam protobuf de malha;
+- registra metadados de mensagens de texto e outros portnums sem gravar o conteúdo textual;
 - trata sinais de encerramento SIGINT e SIGTERM.
 
-**Limite importante:** o processamento depende da PSK configurada. Publicações que não possam ser descriptografadas ou interpretadas pelo fluxo atual são ignoradas pelo hook. Portanto, não trate a implementação atual como um encaminhador transparente e universal para qualquer canal/PSK Meshtastic.
+**Limite importante:** a PSK configurada serve apenas à inspeção de logs. O broker não cria pacotes LoRa nem transmite diretamente ao rádio; o downlink físico exige um gateway Meshtastic conectado ao broker, com downlink habilitado nos canais relevantes. A política `MQTT_ZERO_HOP=true` (padrão) limita a zero os saltos restantes em envelopes protobuf reconhecidos. Autenticação MQTT e ACL por tópico ainda não estão implementadas; mantenha o listener em rede controlada e use PSKs privadas para canais privados.
 
 A estrutura interna está descrita em [Arquitetura](docs/arquitetura.md), e o comportamento do protocolo em [Protocolo e criptografia](docs/protocolo.md).
 
@@ -35,12 +35,13 @@ A estrutura interna está descrita em [Arquitetura](docs/arquitetura.md), e o co
 | MQTT_CERTIFICATE_FILE | certificate.pem |
 | MQTT_PRIVATE_KEY_FILE | private.key |
 | MESHTASTIC_DEFAULT_PSK | PSK padrão do projeto |
+| MQTT_ZERO_HOP | `true` | limita a zero os saltos restantes nos envelopes protobuf |
 
 A PSK fornecida por ambiente deve ser hexadecimal e resultar em 16 ou 32 bytes. Veja [Configuração e execução](docs/configuracao.md).
 
 ## Docker
 
-A imagem usa build multi-stage e executa o binário como usuário sem privilégios. O certificado e a chave privada são fornecidos em tempo de execução, não embutidos na imagem.
+A imagem usa build multi-stage, fixa as imagens-base por digest SHA-256 e executa o binário como usuário sem privilégios. O certificado e a chave privada são fornecidos em tempo de execução, não embutidos na imagem.
 
 Construção local: **docker build -t devnux-mesh-brasil .**
 
@@ -58,9 +59,15 @@ Os caminhos padrão no container são /etc/devnux/certs/certificate.pem e /etc/d
 
     go test ./...
     go vet ./...
+    go test -race ./...
+    go run "golang.org/x/vuln/cmd/govulncheck@$(tr -d '[:space:]' < .github/govulncheck-version)" ./...
     go build ./cmd/broker
 
-A CI também verifica formatação Go. O workflow CodeQL e o workflow de publicação Docker estão no repositório. A existência desses workflows não significa que uma execução recente tenha sido verificada nesta revisão.
+Fuzzing direcionado do parser protobuf (30 segundos):
+
+    go test ./internal/broker -fuzz=FuzzParseServiceEnvelope -fuzztime=30s -parallel=2
+
+A CI verifica formatação, testes, `vet`, detector de condições de corrida, vulnerabilidades Go alcançáveis, build Go, exclusões de segredos no contexto Docker, construção e scan da imagem, geração de SBOM CycloneDX e inicialização TLS do container. O workflow [Fuzz](.github/workflows/fuzz.yml) executa fuzzing direcionado do parser `ServiceEnvelope`. As Actions de terceiros estão fixadas por SHA completo e as imagens-base por digest SHA-256. Confirme sempre os resultados na execução do commit candidato.
 
 Consulte [Guia de desenvolvimento](docs/desenvolvimento.md) e [Validação](docs/validacao.md) para distinguir cobertura existente de execuções efetivamente confirmadas.
 

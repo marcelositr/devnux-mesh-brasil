@@ -1,6 +1,31 @@
 .git
 .github
 /tmp
+
+# Arquivos de ambiente locais; preservar o exemplo não secreto.
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Certificados, chaves privadas e diretórios de segredos locais.
+certs/
+**/certs/
+secrets/
+**/secrets/
 *.pem
 *.key
 *.crt
+*.p12
+*.pfx
+*.jks
+*.keystore
+**/*.pem
+**/*.key
+**/*.crt
+**/*.p12
+**/*.pfx
+**/*.jks
+**/*.keystore

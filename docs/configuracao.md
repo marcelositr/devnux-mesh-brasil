@@ -9,9 +9,22 @@ O broker utiliza:
 | `MQTT_LISTEN_ADDRESS` | `:8883` | endereço do listener MQTT |
 | `MQTT_CERTIFICATE_FILE` | `certificate.pem` | certificado TLS |
 | `MQTT_PRIVATE_KEY_FILE` | `private.key` | chave privada TLS |
-| `MESHTASTIC_DEFAULT_PSK` | PSK padrão do projeto | chave para descriptografia |
+| `MESHTASTIC_DEFAULT_PSK` | PSK padrão do projeto | chave para inspeção opcional |
+| `MQTT_ZERO_HOP` | `true` | define `hop_limit = 0` em envelopes protobuf reconhecidos |
 
 A PSK de ambiente deve ser uma string hexadecimal que resulte em 16 ou 32 bytes.
+
+## Limites de entrada e conexões
+
+O projeto usa Mochi MQTT v2.7.9 e não substitui os limites padrão da biblioteca por valores próprios. A documentação da versão indica:
+
+- `MaximumPacketSize: 0`: não impõe limite máximo de pacote MQTT.
+- `MaximumClients`: o valor padrão não constitui um teto operacional prático para esta implantação.
+- `MaximumClientWritesPending: 8192`: capacidade padrão da fila de escritas pendentes de cada cliente; o Mochi alerta que valores altos aumentam o consumo de memória conforme cresce o número de clientes.
+
+Referências: [API e opções do Mochi MQTT v2.7.9](https://pkg.go.dev/github.com/mochi-mqtt/server/v2@v2.7.9), seção *Server Options and Capabilities*. Não há variáveis de ambiente do projeto para ajustar esses limites.
+
+Mantenha o listener em uma rede controlada e não considere a configuração atual endurecida para clientes não confiáveis. A meta inicial de planejamento é uma rede de até 200 rádios, mas isso não é uma capacidade comprovada nem significa 200 conexões MQTT: rádios podem publicar por meio de gateways. O limite de pacote MQTT também não deve ser confundido com o limite de payload LoRa; o broker recebe um `ServiceEnvelope` protobuf encapsulado em MQTT. Antes de definir valores explícitos, registre tamanhos reais dos envelopes e frequência de publicação em um ensaio representativo, estabeleça a topologia de gateways e meça memória, CPU e latência sob carga. O procedimento está detalhado em [Perfil de carga](perfil-de-carga.md). Não escolher limites arbitrários que possam rejeitar tráfego Meshtastic legítimo.
 
 ## TLS
 
@@ -22,17 +35,23 @@ O certificado e a chave privada são carregados por:
 - `MQTT_CERTIFICATE_FILE`;
 - `MQTT_PRIVATE_KEY_FILE`.
 
-A chave privada nunca deve ser adicionada ao repositório. O arquivo `.gitignore` ignora o diretório local `certs/` e arquivos de certificados/chaves comuns.
+A chave privada nunca deve ser adicionada ao repositório. O `.gitignore` e o `.dockerignore` excluem `certs/`, arquivos de ambiente locais e extensões comuns de certificados/chaves. O `.dockerignore` preserva `.env.example` como exemplo não secreto. Para verificar as exclusões do contexto Docker, execute `bash scripts/test-dockerignore.sh` com Docker instalado.
+
+A CI testa o acesso à chave montada com permissão `0640`, usando o GID do grupo primário do usuário `devnux` no container. Em uma implantação real, reproduza o princípio de menor privilégio com o grupo configurado no host; o GID numérico precisa corresponder a um grupo efetivo do processo no container. A CI não substitui a verificação das permissões e da propriedade no host de implantação.
 
 TLS cifra o transporte entre cliente e broker, mas a autenticação do servidor depende de o cliente validar o certificado apresentado. Um teste com certificado autoassinado e validação de certificado desabilitada confirma a negociação TLS, mas não comprova a identidade do servidor. Para ambientes além de testes locais, configure uma cadeia de confiança adequada e verifique que o cliente valida o certificado.
 
 ## Execução
+
+O `go.mod` declara Go 1.27.0 como versão mínima e fixa a toolchain de validação em Go 1.27.2. O estágio de build do Docker também utiliza `golang:1.27.2-alpine`. Atualizações de toolchain devem ser acompanhadas da regressão completa.
 
 Depois de obter as dependências:
 
 ```bash
 go test ./...
 go vet ./...
+go test -race ./...
+go run "golang.org/x/vuln/cmd/govulncheck@$(tr -d '[:space:]' < .github/govulncheck-version)" ./...
 go build -o /tmp/devnux-mesh-broker ./cmd/broker
 ```
 
@@ -46,7 +65,7 @@ O processo encerra de forma controlada ao receber SIGINT ou SIGTERM.
 
 ## Docker
 
-O projeto possui um `Dockerfile` de múltiplas etapas que compila o broker e cria uma imagem de runtime mínima.
+O projeto possui um `Dockerfile` de múltiplas etapas que compila o broker e cria uma imagem de runtime mínima. As imagens-base do compilador Go e do runtime Alpine são fixadas por digest SHA-256, além das tags de versão. O Dependabot monitora atualizações mensais do ecossistema Docker; atualizações de digest devem passar pela CI completa.
 
 ### Imagem publicada
 
@@ -71,6 +90,8 @@ docker build -t devnux-mesh-brasil .
 ```
 
 A imagem executa o broker como usuário sem privilégios. O certificado e a chave privada devem ser fornecidos em tempo de execução, fora da imagem.
+
+**Permissões da chave privada em Linux:** não use permissões `0644` em uma chave real. Uma opção é restringir a chave a `root` e a um grupo dedicado (`0640`) e iniciar o container com o GID desse grupo como grupo suplementar (`--group-add`). O diretório montado também precisa permitir travessia ao grupo. Mantenha o bind mount somente leitura (`:ro`) e confirme a propriedade, o GID e as permissões no host. O usuário `devnux` continua sem privilégios; não torne a chave globalmente legível para contornar problemas de acesso.
 
 Estrutura esperada no host:
 
@@ -135,6 +156,8 @@ Use certificados apropriados ao ambiente em que o broker será executado.
 A configuração atual aceita conexões e inscrições MQTT sem autenticação adicional e não implementa ACL. A porta não deve ser exposta à Internet nem a redes não confiáveis nessa condição.
 
 Antes de uma implantação pública, os requisitos de autenticação, autorização, controle de abuso e observabilidade deverão ser definidos com base no comportamento observado em hardware Meshtastic físico e real.
+
+A variável `MQTT_ZERO_HOP` controla a política de saltos restantes e assume `true` por padrão. Nesse modo, o broker define `MeshPacket.hop_limit = 0` em envelopes protobuf reconhecidos nos tópicos de malha, preservando `hop_start`, para limitar a propagação de downlink. Mantenha essa opção habilitada no LongFast compartilhado. Defina `MQTT_ZERO_HOP=false` somente para uma malha privada e isolada onde multi-hop via MQTT seja intencional. Para ensaios físicos, ainda prefira uma PSK privada em canal de teste; zero-hop não substitui autenticação MQTT ou ACL.
 
 Não implemente essas camadas apenas com base em hipóteses. As possibilidades e os critérios de decisão estão em [Evolução futura e hardening](evolucao.md).
 

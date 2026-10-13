@@ -4,19 +4,29 @@ Este documento registra resultados conhecidos de testes automatizados, Docker e 
 
 ## Validação automatizada
 
-A documentação existente registra testes para:
+A cobertura presente nos testes do repositório inclui:
 
-- publicação de payload protobuf inválido;
+- preservação e encaminhamento de payload protobuf inválido sem interromper o fluxo MQTT;
 - processamento de ServiceEnvelope Meshtastic válido;
-- descriptografia com a PSK padrão e rejeição de PSK incorreta;
-- processamento de mensagens de texto e diferentes portnums;
-- validação de envelope sem Packet;
-- validação de pacote sem payload criptografado;
-- validação de nonce com valores de borda para from e packetID;
+- validação de campos obrigatórios e rejeição de envelopes/pacotes incompletos;
+- descriptografia de um pacote válido e interpretação de diferentes portnums;
+- validação do layout do nonce e dos valores de PSK padrão;
+- round-trip AES-CTR e vetor de interoperabilidade com a PSK padrão;
+- rejeição de chave AES com tamanho não suportado;
+- teste determinístico com PSK incorreta para um vetor conhecido, sem atribuir ao AES-CTR uma capacidade de autenticação que ele não possui;
+- fuzz target do parser `ServiceEnvelope`, executado por 30 segundos no workflow separado;
 - rejeição de payload MQTT vazio;
-- distribuição do payload original aos assinantes MQTT no cenário coberto pelos testes.
+- encaminhamento de `Data` com `portnum = 0` ou payload vazio;
+- aceitação pelo hook de portnum desconhecido quando o payload é válido;
+- preservação do tópico e dos campos de payload no hook `OnPublish`, incluindo falhas de inspeção, com reescrita de `hop_limit` quando zero-hop está ativo;
+- encaminhamento de tópicos JSON sem interpretá-los como `ServiceEnvelope` (pass-through MQTT; não comprova downlink físico JSON);
+- testes do hook para portnums representativos: texto, posição, NodeInfo, roteamento, waypoint, telemetria, vizinhos e faixa de aplicações privadas, sem filtragem por tipo;
+- teste de integração MQTT/TLS que confirma entrega de `ServiceEnvelope`, `portnum = 0` e tópico JSON a um assinante; o caso JSON valida apenas o pass-through do broker, não o downlink físico.
+- conferência do código oficial do firmware 2.7.26.54e0d8d: JSON downlink é suportado quando `mqtt.json_enabled` está ativo e o canal especial `mqtt` tem downlink habilitado; isso ainda precisa de teste em hardware.
 
-A lista descreve a cobertura documentada no repositório, não uma execução realizada durante esta revisão. Reexecute go test ./... após alterações e consulte os resultados atuais da CI antes de afirmar que a suíte está passando.
+**Limites da cobertura:** o teste de PSK incorreta cobre apenas um vetor fixo e garante que a chave alternativa não recupera aquele `Data` conhecido. AES-CTR não autentica o conteúdo; uma chave errada pode produzir bytes que falham no parsing ou, em alguns casos, dados que ainda podem ser interpretados. Não existe garantia criptográfica de detecção de chave incorreta. O teste de integração conecta dois clientes MQTT ao servidor TLS de teste e verifica a entrega de publicações protobuf e JSON sem que a inspeção local filtre os pacotes.
+
+No commit `fd049bed560d25f81d3fdcd80a06d78df1202740`, a [CI](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38445828267) passou com `gofmt`, `go test ./...`, `go vet ./...`, `go test -race ./...`, `govulncheck` (nenhuma vulnerabilidade alcançável encontrada), build Go, teste de exclusões do contexto Docker, construção e scan da imagem, geração e upload do SBOM CycloneDX e smoke test TLS. O [CodeQL](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38445838203) também passou. O workflow [Fuzz](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38445828477) passou após aproximadamente 869 mil execuções do parser em 30 segundos, sem falha. A imagem-base Go e a imagem Alpine de runtime estão fixadas por digest SHA-256; a CI passou com esses digests. O SBOM CycloneDX é publicado como artefato da execução, com retenção de 30 dias. A validação física multi-nó continua pendente.
 
 ## Validação Docker
 
@@ -24,7 +34,7 @@ O histórico de validação do projeto registra uma construção local com o com
 
 A imagem iniciou como usuário sem privilégios. Durante o ensaio inicial, a chave privada montada com permissão 0600 não pôde ser lida pelo usuário do container; o teste foi repetido ajustando o acesso de grupo sem remover o usuário não-root.
 
-Também foi registrado um teste de publicação MQTT/TLS com um ServiceEnvelope válido, processado e descriptografado no container. O log de exemplo registrado na ocasião foi:
+Também foi registrado um teste de publicação MQTT/TLS com um ServiceEnvelope válido, processado e descriptografado no container. O log de exemplo registrado na ocasião foi, antes da alteração que removeu o texto das mensagens dos logs:
 
     mensagem de texto recebida
     topic=docker/teste
@@ -63,6 +73,8 @@ Esse registro histórico não substitui uma nova execução depois de alteraçõ
 
 ## Próximos testes físicos
 
+A validação com múltiplos equipamentos fica **adiada até depois da conclusão do trabalho de software**, por disponibilidade limitada de rádios. Isso não impede concluir as correções, testes automatizados, documentação e verificações de build/CI que podem ser realizadas agora.
+
 - [x] Conectar um rádio físico ao broker por MQTT/TLS.
 - [x] Confirmar recebimento e processamento de mensagens.
 - [x] Observar a chegada de tráfego após reconexão do Wi-Fi.
@@ -79,9 +91,11 @@ A documentação disponível registra testes automatizados, um teste Docker e um
 
 - funcionamento em uma malha Meshtastic real com múltiplos nós;
 - estabilidade prolongada;
-- compatibilidade com todos os tipos de payload ou portnums;
+- compatibilidade semântica e transmissão física de todos os tipos de payload ou portnums; os testes representativos verificam encaminhamento opaco, não decodificação de cada payload;
+- downlink físico JSON no firmware 2.7.26, apesar de o código do firmware suportar esse caminho;
 - suporte transparente a canais com PSKs diferentes;
 - autenticação de clientes MQTT ou autorização por tópico;
+- validação em hardware real da política zero-hop implementada no broker;
 - prontidão para exposição pública.
 
 Autenticação MQTT, ACL, rate limiting, deduplicação, persistência, moderação e observabilidade avançada continuam sendo possibilidades futuras, não funcionalidades já implementadas. Consulte [Evolução futura e hardening](evolucao.md).
