@@ -28,7 +28,7 @@ O certificado e a chave privada são carregados por:
 - `MQTT_CERTIFICATE_FILE`;
 - `MQTT_PRIVATE_KEY_FILE`.
 
-A chave privada nunca deve ser adicionada ao repositório. O arquivo `.gitignore` ignora o diretório local `certs/` e arquivos de certificados/chaves comuns.
+A chave privada nunca deve ser adicionada ao repositório. O `.gitignore` e o `.dockerignore` excluem `certs/`, arquivos de ambiente locais e extensões comuns de certificados/chaves. O `.dockerignore` preserva `.env.example` como exemplo não secreto. Para verificar as exclusões do contexto Docker, execute `bash scripts/test-dockerignore.sh` com Docker instalado.
 
 TLS cifra o transporte entre cliente e broker, mas a autenticação do servidor depende de o cliente validar o certificado apresentado. Um teste com certificado autoassinado e validação de certificado desabilitada confirma a negociação TLS, mas não comprova a identidade do servidor. Para ambientes além de testes locais, configure uma cadeia de confiança adequada e verifique que o cliente valida o certificado.
 
