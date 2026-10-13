@@ -21,32 +21,31 @@ func TestDefaultPSK(t *testing.T) {
 
 func TestLoadUsesDefaultPSK(t *testing.T) {
 	t.Setenv("MESHTASTIC_DEFAULT_PSK", "")
+	t.Setenv("MESHTASTIC_ZERO_HOP", "")
 
 	cfg, err := Load()
 	if err != nil {
 		t.Fatalf("Load() retornou erro: %v", err)
 	}
-
 	if !bytes.Equal(cfg.DefaultPSK, defaultPSK()) {
 		t.Fatalf("Load() não usou a PSK padrão: %x != %x", cfg.DefaultPSK, defaultPSK())
 	}
-
 	if cfg.ListenAddress != ":8883" {
 		t.Fatalf("ListenAddress inesperado: %q", cfg.ListenAddress)
 	}
-
 	if cfg.CertificateFile != "certificate.pem" {
 		t.Fatalf("CertificateFile inesperado: %q", cfg.CertificateFile)
 	}
-
 	if cfg.PrivateKeyFile != "private.key" {
 		t.Fatalf("PrivateKeyFile inesperado: %q", cfg.PrivateKeyFile)
 	}
+	if cfg.ZeroHop {
+		t.Fatal("ZeroHop deveria estar desativado por padrão")
+	}
 }
 
-func TestLoadUsesEnvironmentPSK(t *testing.T) {
+func TestLoadUsesEnvironmentHexPSK(t *testing.T) {
 	const customPSK = "00112233445566778899aabbccddeeff"
-
 	t.Setenv("MESHTASTIC_DEFAULT_PSK", customPSK)
 
 	cfg, err := Load()
@@ -61,19 +60,54 @@ func TestLoadUsesEnvironmentPSK(t *testing.T) {
 		0xcc, 0xdd, 0xee, 0xff,
 	}
 	if !bytes.Equal(cfg.DefaultPSK, expected) {
-		t.Fatalf("PSK de ambiente inesperada: %x != %x", cfg.DefaultPSK, expected)
+		t.Fatalf("PSK hexadecimal inesperada: %x != %x", cfg.DefaultPSK, expected)
+	}
+}
+
+func TestLoadUsesEnvironmentBase64PSK(t *testing.T) {
+	// 32-byte test key encoded as standard Base64; not a deployment secret.
+	const customPSK = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8="
+	t.Setenv("MESHTASTIC_DEFAULT_PSK", customPSK)
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() retornou erro para PSK Base64: %v", err)
+	}
+
+	expected := make([]byte, 32)
+	for i := range expected {
+		expected[i] = byte(i)
+	}
+	if !bytes.Equal(cfg.DefaultPSK, expected) {
+		t.Fatalf("PSK Base64 inesperada: %x != %x", cfg.DefaultPSK, expected)
+	}
+}
+
+func TestLoadUsesZeroHopEnvironmentSetting(t *testing.T) {
+	t.Setenv("MESHTASTIC_DEFAULT_PSK", "")
+	t.Setenv("MESHTASTIC_ZERO_HOP", "true")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() retornou erro: %v", err)
+	}
+	if !cfg.ZeroHop {
+		t.Fatal("Load() deveria habilitar ZeroHop")
+	}
+
+	t.Setenv("MESHTASTIC_ZERO_HOP", "not-a-bool")
+	if _, err := Load(); err == nil {
+		t.Fatal("Load() deveria rejeitar MESHTASTIC_ZERO_HOP inválido")
 	}
 }
 
 func TestLoadRejectsInvalidEnvironmentPSK(t *testing.T) {
 	t.Setenv("MESHTASTIC_DEFAULT_PSK", "not-hex")
-
 	if _, err := Load(); err == nil {
-		t.Fatal("Load() deveria rejeitar PSK não hexadecimal")
+		t.Fatal("Load() deveria rejeitar PSK não hexadecimal nem Base64")
 	}
 
 	t.Setenv("MESHTASTIC_DEFAULT_PSK", "0011223344556677")
-
 	if _, err := Load(); err == nil {
 		t.Fatal("Load() deveria rejeitar PSK com tamanho inválido")
 	}
