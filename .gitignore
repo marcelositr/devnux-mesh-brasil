@@ -1,0 +1,17 @@
+# TLS certificates and private keys used for local testing
+/certs/
+*.pem
+*.key
+*.crt
+*.pfx
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Generated binaries and test artifacts
+/broker
+/devnux-mesh-broker
+*.test
+coverage.out
