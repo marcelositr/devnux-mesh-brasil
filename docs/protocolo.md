@@ -79,9 +79,11 @@ O campo `Data.portnum` identifica o tipo de aplicação; o broker não deve exig
 | 78 | `ATAK_PLUGIN_V2` | Integração ATAK v2 |
 | 79 | `LORA_OTA_APP` | Atualização de firmware via LoRa |
 | 112 | `GROUPALARM_APP` | Integração GroupAlarm |
-| 256–511 | Aplicações privadas | Extensões privadas; o valor 256 também é denominado `PRIVATE_APP` |
+| 256 | `PRIVATE_APP` | Identificador genérico para aplicações privadas |
+| 257 | `ATAK_FORWARDER` | Integração ATAK Forwarder registrada |
+| 256–511 | Faixa para aplicações privadas | O catálogo oficial também pode atribuir valores específicos dentro da faixa |
 
-Além do `Data`, o `MeshPacket` carrega campos de encaminhamento e controle como origem, destino, ID do pacote, canal, limite inicial/atual de saltos, solicitação de ACK e próximo salto. O `ServiceEnvelope` acrescenta `channel_id` e `gateway_id). O broker deve preservar o protobuf original em vez de reconstruir um pacote com campos que não compreende.
+Além do `Data`, o `MeshPacket` carrega campos de encaminhamento e controle como origem, destino, ID do pacote, canal, limite inicial/atual de saltos, solicitação de ACK e próximo salto. O `ServiceEnvelope` acrescenta `channel_id` e `gateway_id`. O broker deve preservar o protobuf original em vez de reconstruir um pacote com campos que não compreende.
 
 O MQTT também pode transportar `MapReport` e tópicos auxiliares fora do formato comum `ServiceEnvelope`. Esses payloads devem ser preservados, mesmo que o broker não os decodifique.
 
