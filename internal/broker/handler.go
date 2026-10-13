@@ -79,7 +79,12 @@ func (h *Handler) OnPublish(client *mqtt.Client, packet packets.Packet) (packets
 
 	envelope, err := h.processor.parseServiceEnvelope(packet.Payload)
 	if err != nil {
-		h.logger.Warn("falha ao inspecionar ServiceEnvelope; publicação preservada", "topic", packet.TopicName, "client_id", client.ID)
+		h.logger.Warn(
+			"falha ao inspecionar ServiceEnvelope; publicação preservada",
+			"topic", packet.TopicName,
+			"client_id", client.ID,
+			"payload_bytes", len(packet.Payload),
+		)
 		return packet, nil
 	}
 
@@ -109,13 +114,24 @@ func (h *Handler) OnPublish(client *mqtt.Client, packet packets.Packet) (packets
 
 	data, err := h.processor.decryptMeshPacket(envelope)
 	if err != nil {
-		// A chave configurada pode não corresponder ao canal ou ao tipo de
-		// criptografia. Isso não pode impedir o encaminhamento do pacote bruto.
-		h.logger.Debug("pacote Meshtastic encaminhado sem descriptografia local", "topic", packet.TopicName, "client_id", client.ID, "erro", err)
+		// A chave local pode não corresponder ao canal. A falha de inspeção
+		// não pode impedir o encaminhamento MQTT e precisa ser visível em INFO.
+		h.logger.Info(
+			"pacote Meshtastic recebido; sem descriptografia local",
+			"topic", packet.TopicName,
+			"client_id", client.ID,
+			"payload_bytes", len(packet.Payload),
+			"erro", err,
+		)
 		return packet, nil
 	}
 	if data == nil {
-		h.logger.Debug("pacote Meshtastic sem dados interpretáveis localmente encaminhado", "topic", packet.TopicName, "client_id", client.ID)
+		h.logger.Info(
+			"pacote Meshtastic recebido; sem dados interpretáveis localmente",
+			"topic", packet.TopicName,
+			"client_id", client.ID,
+			"payload_bytes", len(packet.Payload),
+		)
 		return packet, nil
 	}
 
