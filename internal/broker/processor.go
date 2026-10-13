@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/marcelositr/devnux-mesh-brasil/internal/crypto"
 	meshtastic "github.com/kmpm/meshtastic-protobufs.go/v2/generated"
+	"github.com/marcelositr/devnux-mesh-brasil/internal/crypto"
 	"google.golang.org/protobuf/proto"
 )
 
