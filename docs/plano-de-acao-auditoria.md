@@ -38,12 +38,14 @@ Finalizar o software com mudanças pequenas e rastreáveis, comportamento docume
 
 ### Fase 2 — Segurança e configuração
 
-- [ ] Avaliar limites de tamanho de pacote, clientes e recursos pendentes com base no tráfego Meshtastic esperado para uma meta de planejamento de até 200 rádios; não escolher valores arbitrários.
+- [x] Consultar a documentação oficial do Mochi MQTT v2.7.9: `MaximumPacketSize: 0` não limita o pacote MQTT; `MaximumClientWritesPending` tem padrão 8192 por cliente; `MaximumClients` não impõe um teto operacional útil. Registrado em `docs/configuracao.md`.
+- [ ] Definir limites de tamanho de pacote, clientes e recursos pendentes após medir envelopes reais, frequência de publicação e consumo sob carga para a meta de planejamento de até 200 rádios; não escolher valores arbitrários.
 - [ ] Definir o modelo de conexão da rede (rádios conectados diretamente ou por gateways), pois o número de rádios não equivale necessariamente ao número de clientes MQTT.
 - [ ] Elaborar um perfil de carga representativo e medir memória/CPU/latência antes de declarar capacidade suportada.
 - [ ] Se forem definidos limites, configurar e testar os limites no broker.
 - [x] Revisar `.dockerignore` para excluir arquivos `.env`, certificados, chaves e diretórios locais de segredos, preservando `.env.example`; o teste de regressão `scripts/test-dockerignore.sh` foi adicionado à CI. A execução da CI ainda precisa ser confirmada.
-- [x] Documentar a recomendação de menor privilégio para a chave TLS montada: chave `0640` restrita a root/grupo dedicado, grupo suplementar no container e bind mount somente leitura. A verificação automatizada desse procedimento ainda não foi concluída.
+- [x] Documentar a recomendação de menor privilégio para a chave TLS montada: chave `0640` restrita a root/grupo dedicado, acesso do grupo no container e bind mount somente leitura.
+- [ ] Confirmar CI do smoke test Docker com chave `0640` e grupo correspondente ao usuário `devnux`.
 - [ ] Manter explícita a restrição a redes confiáveis enquanto não houver autenticação MQTT e ACL.
 - [ ] Testar casos de PSK incorreta e payloads inválidos, documentando o que AES-CTR permite ou não detectar.
 - [ ] Não alterar a criptografia do protocolo Meshtastic sem requisito e evidência de interoperabilidade.
@@ -126,7 +128,7 @@ Atualizar esta seção a cada etapa concluída, com o SHA do commit e links dos 
 - **Revisão do diff:** comparação com o SHA inicial identificou apenas os seis arquivos previstos para testes, comportamento e documentação.
 - **Revisão do ciclo de vida:** `cmd/broker/main.go` já lida com falha de inicialização e encerramento por `SIGINT`/`SIGTERM`; nenhum defeito demonstrável encontrado, sem alteração de código.
 - **Decisão registrada:** planejar inicialmente para uma rede de até 200 rádios. Não definir limites de pacote/conexões até examinar a documentação da versão Mochi MQTT usada e estabelecer perfil de carga plausível.
-- **Progresso Fase 2:** `.dockerignore` atualizado e teste de regressão ligado à CI; documentação de permissões TLS atualizada. A CI precisa confirmar o teste de contexto Docker. A execução local de Docker não está disponível neste ambiente, portanto não foi declarada como executada.
-- **Próxima ação:** confirmar CI/CodeQL e decidir como validar de forma automatizada o acesso à chave TLS sem permissões globais; não alterar a cifra Meshtastic.
+- **Progresso Fase 2:** `.dockerignore` atualizado e teste de regressão integrado à CI; a CI anterior passou para o teste de exclusão de segredos. O smoke test TLS foi alterado para usar chave `0640` com grupo alinhado ao usuário do container; a nova execução de CI/CodeQL está em andamento. Os defaults da biblioteca Mochi MQTT v2.7.9 foram documentados, sem introduzir limites numéricos arbitrários.
+- **Próxima ação:** confirmar os resultados da CI/CodeQL; depois, estabelecer o perfil de carga e a topologia MQTT antes de definir limites. Não alterar a cifra Meshtastic.
 - **Validação física multi-nó:** pendente.
 - **Integração com `main`:** reservada para o final.
