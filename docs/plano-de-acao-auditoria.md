@@ -3,7 +3,7 @@
 - **Projeto:** DevNux Mesh Brasil
 - **Branch de trabalho:** `work/finalizacao-projeto`
 - **Base da auditoria:** commit `a6f6672c54f83729872e9591b5863f480c0ad650`
-- **Estado:** Fase 1 concluída; Fase 2 em andamento. Meta inicial de planejamento acordada: dimensionar para uma rede de até 200 rádios, sem tratar isso como capacidade comprovada nem converter diretamente rádios em conexões MQTT.
+- **Estado:** Fase 1 concluída; verificações automatizáveis das Fases 2 e 3 passaram na CI/CodeQL; Fase 4 está na revisão final. A coleta de carga real e a validação física da Fase 5 continuam pendentes. Meta de planejamento: até 200 rádios, sem tratar isso como capacidade comprovada nem converter diretamente rádios em conexões MQTT.
 - **Processo:** trabalhar diretamente na branch de trabalho. Não abrir PRs novos nem fazer merge durante a execução. A integração com `main` será tratada somente no final.
 - **Regra de evidência:** não declarar testes executados sem resultado verificável. Separar testes automatizados, testes de container e validação física com hardware.
 
@@ -44,7 +44,7 @@ Finalizar o software com mudanças pequenas e rastreáveis, comportamento docume
 - [x] Documentar a metodologia para coletar tráfego real e testar conexões, carga normal, pico observado, assinantes lentos e reconexões em `docs/perfil-de-carga.md`.
 - [ ] Coletar dados reais de tamanho/frequência dos envelopes e medir memória/CPU/latência antes de declarar capacidade suportada.
 - [ ] Se forem definidos limites, configurar e testar os limites no broker.
-- [x] Revisar `.dockerignore` para excluir arquivos `.env`, certificados, chaves e diretórios locais de segredos, preservando `.env.example`; o teste de regressão `scripts/test-dockerignore.sh` foi adicionado à CI. A execução da CI ainda precisa ser confirmada.
+- [x] Revisar `.dockerignore` para excluir arquivos `.env`, certificados, chaves e diretórios locais de segredos, preservando `.env.example`; o teste de regressão `scripts/test-dockerignore.sh` está integrado à CI e passou no commit candidato `fbcf066`.
 - [x] Documentar a recomendação de menor privilégio para a chave TLS montada: chave `0640` restrita a root/grupo dedicado, acesso do grupo no container e bind mount somente leitura.
 - [x] Confirmar CI do smoke test Docker com chave `0640` e grupo correspondente ao usuário `devnux` — sucesso na execução [38429481414](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38429481414).
 - [x] Manter explícita a restrição a redes confiáveis enquanto não houver autenticação MQTT e ACL; consta no README, configuração, desenvolvimento e SECURITY.md.
@@ -62,7 +62,7 @@ Finalizar o software com mudanças pequenas e rastreáveis, comportamento docume
 - [x] Fixar as Actions de terceiros por SHA completo nos workflows CI, CodeQL e Docker; os workflows passaram após a alteração.
 - [ ] Habilitar/confirmar o reporte privado de vulnerabilidades nas configurações do repositório; a automação disponível não tem permissão para alterar esta configuração.
 - [x] Executar formatação, testes, race, govulncheck, vet, build Go, CI, CodeQL, scan e smoke test Docker no commit candidato `fbcf0668611fcda621f59dbde50caabbcd61c996`.
-- [ ] Revisar o diff integral da branch para confirmar que somente alterações previstas foram incluídas.
+- [x] Revisar a lista integral de arquivos alterados entre `main` e `work/finalizacao-projeto`; os 23 arquivos alterados correspondem às correções, testes, workflows, segurança e documentação previstas no plano. A validação final do diff permanece ligada ao commit candidato e não inclui scripts locais não rastreados.
 
 **Critério de saída:** commit candidato identificado; CI e CodeQL verdes nesse SHA; imagem construída e testada; publicação condicionada às verificações.
 
@@ -122,7 +122,7 @@ O trabalho de auditoria, testes automatizados e correções não deve ser confun
 
 Atualizar esta seção a cada etapa concluída, com o SHA do commit e links dos resultados:
 
-- **Fase atual:** Fases 2 e 3 — hardening automatizado e validação da nova toolchain. Meta de planejamento: até 200 rádios, sem garantia de capacidade. Fase 5 física multi-rádio permanece explicitamente posterior.
+- **Fase atual:** verificações automatizáveis das Fases 2 e 3 concluídas com sucesso no commit candidato; Fase 4 em revisão final. Limites de carga continuam pendentes até haver topologia e medições reais. Fase 5 física multi-rádio permanece explicitamente posterior.
 - **SHA inicial da auditoria:** `a6f6672c54f83729872e9591b5863f480c0ad650`.
 - **SHA com testes de regressão antes da implementação:** `8fd8aa9d823693243d29ffb100adfbcc5cc901e1` — CI falhou como esperado em `TestOnPublishIgnoresDataWithoutUsefulPayload`, confirmando o defeito.
 - **SHA candidato validado:** `11af5e650ca84c615d2d884bc05dfa7b1d8e5c38`.
@@ -131,9 +131,9 @@ Atualizar esta seção a cada etapa concluída, com o SHA do commit e links dos 
 - **Revisão do diff:** comparação com o SHA inicial identificou apenas os seis arquivos previstos para testes, comportamento e documentação.
 - **Revisão do ciclo de vida:** `cmd/broker/main.go` já lida com falha de inicialização e encerramento por `SIGINT`/`SIGTERM`; nenhum defeito demonstrável encontrado, sem alteração de código.
 - **Decisão registrada:** planejar inicialmente para uma rede de até 200 rádios. Não definir limites de pacote/conexões até examinar a documentação da versão Mochi MQTT usada e estabelecer perfil de carga plausível.
-- **Progresso Fase 2:** `.dockerignore` atualizado e teste de regressão integrado à CI; o teste de contexto Docker e o smoke test TLS com chave `0640` passaram na [CI 38429481414](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38429481414). O CodeQL estava em andamento na última consulta. Os defaults da biblioteca Mochi MQTT v2.7.9 foram documentados, sem introduzir limites numéricos arbitrários.
+- **Progresso Fase 2:** teste de PSK incorreta adicionado com ressalva explícita de que AES-CTR não autentica conteúdo; restrição de rede controlada documentada; CI atual passou no teste de contexto Docker e no smoke test TLS com chave `0640`. Os defaults do Mochi MQTT v2.7.9 estão documentados; não foram introduzidos limites numéricos arbitrários.
 - **Progresso de dimensionamento:** a metodologia de teste de carga foi registrada em `docs/perfil-de-carga.md`; ainda faltam topologia final, captura de tráfego representativa e medições do host.
-- **Próxima ação:** confirmar CI/CodeQL das atualizações documentais; depois, usar dados do hardware e da implantação para preencher o perfil. Só então decidir limites. Não alterar a cifra Meshtastic.
+- **Próximas ações:** habilitar/confirmar o reporte privado de vulnerabilidades nas configurações do GitHub; fazer a revisão final do PR #10 sem merge antecipado; usar dados do hardware e da implantação para preencher o perfil de carga e só então decidir limites. Não alterar a cifra Meshtastic.
 - **Alterações recentes no branch de trabalho:** teste de PSK incorreta (`5506bd3`); Dependabot para Go, GitHub Actions e Docker (`c50516a`); atualização de Go para 1.27.2 (`5e16f1d`, `cf026a6`); CI com race, govulncheck, Trivy e Actions pinadas (`b7db4e7`, `f4eeff7`, `5144f11`). A CI e o CodeQL passaram no candidato `fbcf066`; as mudanças documentais finais serão verificadas em nova execução.
 - **Validação física multi-nó:** pendente.
 - **Integração com `main`:** reservada para o final.

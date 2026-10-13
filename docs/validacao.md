@@ -23,8 +23,6 @@ A cobertura presente nos testes do repositório inclui:
 
 No commit `fbcf0668611fcda621f59dbde50caabbcd61c996`, a [CI](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38443657663) passou com `gofmt`, `go test ./...`, `go vet ./...`, `go test -race ./...`, `govulncheck` (nenhuma vulnerabilidade alcançável encontrada), build Go, teste de exclusões do contexto Docker, construção da imagem, Trivy e smoke test TLS. O [CodeQL](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38443657757) também passou. Esses resultados são do commit indicado; a validação física multi-nó continua pendente.
 
-A lista descreve a cobertura encontrada no código; o resultado de execução confirmado para o commit indicado acima está registrado separadamente pelos links da CI e do CodeQL. A validação física multi-nó continua pendente.
-
 ## Validação Docker
 
 O histórico de validação do projeto registra uma construção local com o comando **docker build -t devnux-mesh-brasil .**.
