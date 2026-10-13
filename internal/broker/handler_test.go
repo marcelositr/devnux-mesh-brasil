@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"log/slog"
+	"strings"
 	"testing"
 
 	meshtastic "github.com/kmpm/meshtastic-protobufs.go/v2/generated"
@@ -18,6 +19,27 @@ import (
 func testHandler() *Handler {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	return NewHandler(logger, config.Config{DefaultPSK: crypto.DefaultPSK})
+}
+
+
+func TestLogReceivedMessageDoesNotLogTextPayload(t *testing.T) {
+	var logs bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&logs, nil))
+	handler := NewHandler(logger, config.Config{DefaultPSK: crypto.DefaultPSK})
+	secretMessage := "texto privado que nao deve aparecer no log"
+
+	handler.logReceivedMessage("msh/test", "test-client", &meshtastic.Data{
+		Portnum: 1,
+		Payload: []byte(secretMessage),
+	})
+
+	output := logs.String()
+	if strings.Contains(output, secretMessage) {
+		t.Fatalf("o log revelou o conteúdo da mensagem: %q", output)
+	}
+	if !strings.Contains(output, "payload_bytes=") {
+		t.Fatalf("o log deveria registrar o tamanho do payload: %q", output)
+	}
 }
 
 func TestOnPublishIgnoresEmptyPayload(t *testing.T) {
