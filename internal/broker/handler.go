@@ -62,8 +62,8 @@ func (h *Handler) OnSubscribe(client *mqtt.Client, packet packets.Packet) packet
 }
 
 // OnPublish inspeciona pacotes Meshtastic quando possível, sem filtrar o fluxo MQTT.
-// A inspeção e a PSK local servem apenas para observabilidade; o tópico e o payload
-// originais são preservados para que o broker encaminhe o tráfego aos assinantes.
+// A inspeção e a PSK local servem apenas para observabilidade. O tópico é preservado;
+// o payload só é reserializado quando a política zero-hop altera hop_limit.
 func (h *Handler) OnPublish(client *mqtt.Client, packet packets.Packet) (packets.Packet, error) {
 	if len(packet.Payload) == 0 {
 		h.logger.Debug("publicação MQTT com payload vazio encaminhada", "topic", packet.TopicName, "client_id", client.ID)
