@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/marcelositr/devnux-mesh-brasil/internal/crypto"
 )
@@ -14,15 +15,22 @@ type Config struct {
 	CertificateFile string
 	PrivateKeyFile  string
 	DefaultPSK      []byte
+	ZeroHop         bool
 }
 
 // Load carrega as configurações do ambiente e aplica os valores padrão.
 func Load() (Config, error) {
+	zeroHop, err := boolEnvOrDefault("MQTT_ZERO_HOP", true)
+	if err != nil {
+		return Config{}, fmt.Errorf("MQTT_ZERO_HOP inválido: %w", err)
+	}
+
 	cfg := Config{
 		ListenAddress:   envOrDefault("MQTT_LISTEN_ADDRESS", ":8883"),
 		CertificateFile: envOrDefault("MQTT_CERTIFICATE_FILE", "certificate.pem"),
 		PrivateKeyFile:  envOrDefault("MQTT_PRIVATE_KEY_FILE", "private.key"),
 		DefaultPSK:      append([]byte(nil), crypto.DefaultPSK...),
+		ZeroHop:         zeroHop,
 	}
 
 	if value := os.Getenv("MESHTASTIC_DEFAULT_PSK"); value != "" {
@@ -57,4 +65,18 @@ func envOrDefault(name, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+ 
+// boolEnvOrDefault parses a boolean environment variable or returns its fallback.
+func boolEnvOrDefault(name string, fallback bool) (bool, error) {
+	value := os.Getenv(name)
+	if value == "" {
+		return fallback, nil
+	}
+	parsed, err := strconv.ParseBool(value)
+	if err != nil {
+		return false, err
+	}
+	return parsed, nil
 }
