@@ -30,11 +30,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	go func() {
-		if err := server.Serve(); err != nil {
-			logger.Error("servidor MQTT encerrado com erro", "erro", err)
+	if err := server.Serve(); err != nil {
+		logger.Error("falha ao iniciar servidor MQTT", "erro", err)
+		if closeErr := server.Close(); closeErr != nil {
+			logger.Error("falha ao encerrar servidor após erro de inicialização", "erro", closeErr)
 		}
-	}()
+		os.Exit(1)
+	}
 
 	logger.Info("servidor MQTT iniciado", "endereco", cfg.ListenAddress)
 	waitForShutdown(logger, server)
