@@ -4,21 +4,21 @@
 
 Registrar possibilidades de evolução sem transformar hipóteses em requisitos automáticos. A decisão atual é concluir e verificar o software com os testes automatizados, de integração, build e Docker que podem ser executados sem comprar ou reunir mais rádios. A validação física com dois ou mais nós fica registrada como etapa posterior, não como bloqueio para esse trabalho. Consulte [Validação](validacao.md) e [Equipamentos e ensaios](equipamentos.md).
 
-## Correções técnicas identificadas na revisão estática
+## Correções técnicas em andamento
 
-Os itens abaixo são observações de leitura do código, não resultados de testes de execução. Devem ser confirmados com testes antes de declarar uma correção concluída:
+As duas primeiras correções e o teste de integração foram implementados nesta branch, mas ainda dependem da execução dos testes e da CI para serem considerados verificados:
 
-- **Erro ao iniciar o servidor:** o retorno de Serve é registrado numa goroutine, mas o processo principal continua aguardando SIGINT/SIGTERM. Se Serve terminar com erro, o processo pode permanecer ativo sem serviço funcional. Tratar o erro no ciclo de vida e cobrir o comportamento com teste.
-- **Logs de mensagens:** o hook registra o conteúdo integral das mensagens de texto em nível INFO. Remover o conteúdo da mensagem dos logs por padrão para reduzir exposição de conversas e crescimento dos logs.
-- **Teste de integração MQTT:** os testes do hook não substituem um cenário com dois clientes MQTT conectados, um publicando e outro recebendo a publicação. Cobrir esse fluxo em teste automatizado.
-- **Limites de entrada:** verificar e documentar os limites efetivos de tamanho de publicação e conexões na biblioteca MQTT utilizada; não presumir que existam limites específicos configurados pelo projeto.
+- **Ciclo de vida do servidor:** `Serve` agora é chamado de forma síncrona e seu erro é tratado antes de o processo aguardar sinais de encerramento.
+- **Logs de mensagens:** o conteúdo textual deixou de ser registrado; o log mantém tópico, cliente, portnum e tamanho do payload. Foi adicionado teste para impedir regressão dessa exposição.
+- **Integração MQTT:** foi adicionado teste com dois clientes MQTT sobre TLS, um publicando e outro assinando, para verificar a entrega do payload original.
+- **Limites de entrada:** permanece pendente verificar e documentar os limites efetivos de tamanho de publicação e conexões na versão da biblioteca MQTT utilizada; não presumir que existam limites específicos configurados pelo projeto.
 
 ## Sequência de finalização do software
 
 1. Corrigir afirmações documentais que excedem a cobertura real dos testes.
-2. Tratar o ciclo de vida do servidor quando `Serve` termina com erro e adicionar cobertura automatizada.
-3. Evitar registrar o conteúdo integral de mensagens de texto em logs operacionais.
-4. Criar teste de integração com dois clientes MQTT para comprovar publicação e recebimento.
+2. Executar e validar o tratamento de erros no ciclo de vida do servidor.
+3. Executar o teste de regressão que garante que logs não exponham o texto das mensagens.
+4. Executar o teste de integração MQTT com dois clientes e corrigir qualquer falha encontrada.
 5. Verificar limites relevantes de entrada e conexões da biblioteca usada e documentar o que estiver efetivamente configurado.
 6. Executar formatação, testes, `go vet`, build, CI, CodeQL e construção/execução Docker conforme os recursos disponíveis.
 7. Revisar os documentos, exemplos de configuração, segurança, publicação da imagem e critérios de release.
