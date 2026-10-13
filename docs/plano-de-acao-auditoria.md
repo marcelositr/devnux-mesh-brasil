@@ -58,7 +58,7 @@ Finalizar o software com mudanças pequenas e rastreáveis, comportamento docume
 - [ ] Revisar o workflow Docker para que a publicação dependa da aprovação das verificações de qualidade.
 - [ ] Aplicar o critério às publicações de `latest`, tags de versão e execuções manuais.
 - [ ] Verificar vulnerabilidades conhecidas nas dependências Go e nas imagens base. Os passos `govulncheck` e Trivy foram adicionados à CI; resultado ainda pendente.
-- [ ] Avaliar a versão da toolchain Go e planejar atualização somente com regressão completa. `go.mod` e a imagem de build foram atualizados para Go 1.27.1; regressão completa ainda pendente.
+- [ ] Avaliar a versão da toolchain Go e planejar atualização somente com regressão completa. `go.mod` e a imagem de build foram atualizados para Go 1.27.2 após o `govulncheck` identificar vulnerabilidades na biblioteca padrão corrigidas nessa versão; regressão completa sem o passo diagnóstico ainda pendente.
 - [ ] Fixar as Actions de terceiros por SHA completo; aplicado aos workflows CI, CodeQL e Docker, aguardando validação dos workflows.
 - [ ] Habilitar/confirmar o reporte privado de vulnerabilidades nas configurações do repositório; a automação disponível não tem permissão para alterar esta configuração.
 - [ ] Executar formatação, testes, race, govulncheck, vet, build Go, CI, CodeQL, scan e smoke test Docker no commit candidato a release.
