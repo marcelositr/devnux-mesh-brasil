@@ -23,7 +23,7 @@ O teste físico documentado utilizou um **Heltec Wi-Fi LoRa 32 V4**. A validaç�
 - registra metadados de mensagens de texto e outros portnums sem gravar o conteúdo textual;
 - trata sinais de encerramento SIGINT e SIGTERM.
 
-**Limite importante:** a PSK configurada serve apenas à inspeção de logs. O broker não cria pacotes LoRa nem transmite diretamente ao rádio; o downlink físico exige um gateway Meshtastic conectado ao broker, com downlink habilitado nos canais relevantes. A configuração atual ainda não implementa autenticação MQTT nem ACL por tópico; mantenha o listener em rede controlada.
+**Limite importante:** a PSK configurada serve apenas à inspeção de logs. O broker não cria pacotes LoRa nem transmite diretamente ao rádio; o downlink físico exige um gateway Meshtastic conectado ao broker, com downlink habilitado nos canais relevantes. A configuração atual ainda não implementa autenticação MQTT, ACL por tópico ou política zero-hop. Não habilite downlink no LongFast compartilhado com a PSK padrão até que zero-hop seja implementado e testado; mantenha o listener em rede controlada.
 
 A estrutura interna está descrita em [Arquitetura](docs/arquitetura.md), e o comportamento do protocolo em [Protocolo e criptografia](docs/protocolo.md).
 
