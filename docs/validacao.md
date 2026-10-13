@@ -18,7 +18,7 @@ A cobertura presente nos testes do repositório inclui:
 - rejeição de payload MQTT vazio;
 - encaminhamento de `Data` com `portnum = 0` ou payload vazio;
 - aceitação pelo hook de portnum desconhecido quando o payload é válido;
-- preservação do tópico e payload originais no retorno do hook `OnPublish`, inclusive em falhas de inspeção;
+- preservação do tópico e dos campos de payload no hook `OnPublish`, incluindo falhas de inspeção, com reescrita de `hop_limit` quando zero-hop está ativo;
 - encaminhamento de tópicos JSON de downlink sem interpretá-los como `ServiceEnvelope`;
 - teste de integração MQTT/TLS que confirma entrega de `ServiceEnvelope`, `portnum = 0` e tópico JSON a um assinante.
 
