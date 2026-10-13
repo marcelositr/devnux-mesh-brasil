@@ -11,7 +11,7 @@ As duas primeiras correções e o teste de integração foram implementados nest
 - **Ciclo de vida do servidor:** `Serve` agora é chamado de forma síncrona e seu erro é tratado antes de o processo aguardar sinais de encerramento.
 - **Logs de mensagens:** o conteúdo textual deixou de ser registrado; o log mantém tópico, cliente, portnum e tamanho do payload. Foi adicionado teste para impedir regressão dessa exposição.
 - **Integração MQTT:** foi adicionado teste com dois clientes MQTT sobre TLS, um publicando e outro assinando, para verificar a entrega do payload original.
-- **Limites de entrada:** permanece pendente verificar e documentar os limites efetivos de tamanho de publicação e conexões na versão da biblioteca MQTT utilizada; não presumir que existam limites específicos configurados pelo projeto.
+- **Limites de entrada:** verificado na documentação/código da Mochi MQTT v2.7.9 e registrado em [Configuração e execução](configuracao.md): o projeto não define limite próprio de tamanho de pacote ou número de clientes. Definir limites numéricos fica condicionado aos requisitos de implantação e carga.
 
 ## Sequência de finalização do software
 
@@ -19,7 +19,7 @@ As duas primeiras correções e o teste de integração foram implementados nest
 2. Executar e validar o tratamento de erros no ciclo de vida do servidor.
 3. Executar o teste de regressão que garante que logs não exponham o texto das mensagens.
 4. Executar o teste de integração MQTT com dois clientes e corrigir qualquer falha encontrada.
-5. Verificar limites relevantes de entrada e conexões da biblioteca usada e documentar o que estiver efetivamente configurado.
+5. Confirmar se a implantação pretendida exige limites explícitos de pacote e clientes; até haver requisitos, manter a restrição de rede documentada e não inventar valores.
 6. Executar formatação, testes, `go vet`, build, CI, CodeQL e construção/execução Docker conforme os recursos disponíveis.
 7. Revisar os documentos, exemplos de configuração, segurança, publicação da imagem e critérios de release.
 8. Registrar explicitamente os testes físicos ainda pendentes e os limites de uso da versão finalizada.
