@@ -16,6 +16,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -33,6 +34,7 @@ func TestMQTTSubscriberReceivesAcceptedPublication(t *testing.T) {
 		CertificateFile: certificateFile,
 		PrivateKeyFile:  privateKeyFile,
 		DefaultPSK:      crypto.DefaultPSK,
+		ZeroHop:         true,
 	})
 	if err != nil {
 		t.Fatalf("newServer() retornou erro: %v", err)
@@ -65,7 +67,7 @@ func TestMQTTSubscriberReceivesAcceptedPublication(t *testing.T) {
 	publisher := connectTestMQTTClient(t, listener.Address(), tlsConfig, "integration-publisher")
 	t.Cleanup(func() { _ = publisher.Close() })
 
-	const topic = "msh/test"
+	const topic = "msh/2/e/LongFast/!abcd1234"
 
 	// Pacotes com portnum zero, envelopes cifrados válidos e tópicos JSON
 	// devem ser encaminhados sem o broker exigir uma descriptografia local.
@@ -76,7 +78,7 @@ func TestMQTTSubscriberReceivesAcceptedPublication(t *testing.T) {
 	}{
 		{
 			name:    "portnum zero",
-			topic:   "msh/test",
+			topic:   topic,
 			payload: testEnvelopePayload(t, &meshtastic.Data{Portnum: 0, Payload: []byte("not useful")}),
 		},
 		{
@@ -113,8 +115,20 @@ func TestMQTTSubscriberReceivesAcceptedPublication(t *testing.T) {
 			if receivedTopic != publication.topic {
 				t.Fatalf("tópico recebido = %q, esperado %q", receivedTopic, publication.topic)
 			}
-			if !bytes.Equal(receivedPayload, publication.payload) {
-				t.Fatalf("payload encaminhado difere da publicação %q", publication.name)
+			expectedPayload := publication.payload
+			if strings.Contains(publication.topic, "/2/e/") || strings.Contains(publication.topic, "/2/c/") {
+				var envelope meshtastic.ServiceEnvelope
+				if err := proto.Unmarshal(expectedPayload, &envelope); err == nil && envelope.GetPacket() != nil {
+					envelope.GetPacket().HopLimit = 0
+					if rewritten, err := proto.Marshal(&envelope); err == nil {
+						expectedPayload = rewritten
+					} else {
+						t.Fatalf("não foi possível serializar payload esperado: %v", err)
+					}
+				}
+			}
+			if !bytes.Equal(receivedPayload, expectedPayload) {
+				t.Fatalf("payload encaminhado difere do esperado para %q", publication.name)
 			}
 			if err := subscriber.SetReadDeadline(time.Time{}); err != nil {
 				t.Fatalf("não foi possível remover timeout: %v", err)
@@ -270,8 +284,10 @@ func testEnvelopePayload(t *testing.T, data *meshtastic.Data) []byte {
 		ChannelId: "integration-channel",
 		GatewayId: "integration-gateway",
 		Packet: &meshtastic.MeshPacket{
-			Id:   packetID,
-			From: from,
+			Id:       packetID,
+			From:     from,
+			HopLimit: 3,
+			HopStart: 3,
 			PayloadVariant: &meshtastic.MeshPacket_Encrypted{
 				Encrypted: encrypted,
 			},
