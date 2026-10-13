@@ -4,19 +4,21 @@ Este documento registra resultados conhecidos de testes automatizados, Docker e 
 
 ## Validação automatizada
 
-A documentação existente registra testes para:
+A cobertura presente nos testes do repositório inclui:
 
-- publicação de payload protobuf inválido;
+- rejeição de payload protobuf inválido pelo hook;
 - processamento de ServiceEnvelope Meshtastic válido;
-- descriptografia com a PSK padrão e rejeição de PSK incorreta;
-- processamento de mensagens de texto e diferentes portnums;
-- validação de envelope sem Packet;
-- validação de pacote sem payload criptografado;
-- validação de nonce com valores de borda para from e packetID;
+- validação de campos obrigatórios e rejeição de envelopes/pacotes incompletos;
+- descriptografia de um pacote válido e interpretação de diferentes portnums;
+- validação do layout do nonce e dos valores de PSK padrão;
+- round-trip AES-CTR e vetor de interoperabilidade com a PSK padrão;
+- rejeição de chave AES com tamanho não suportado;
 - rejeição de payload MQTT vazio;
-- distribuição do payload original aos assinantes MQTT no cenário coberto pelos testes.
+- preservação do payload original no retorno do hook `OnPublish` nos cenários cobertos.
 
-A lista descreve a cobertura documentada no repositório, não uma execução realizada durante esta revisão. Reexecute go test ./... após alterações e consulte os resultados atuais da CI antes de afirmar que a suíte está passando.
+**Limites da cobertura:** não existe um teste específico que comprove a rejeição de uma PSK incorreta. AES-CTR não autentica o conteúdo; uma chave errada pode produzir bytes que falham no parsing, mas não existe garantia criptográfica de detecção de chave incorreta. Também não existe ainda um teste de integração com dois clientes MQTT que comprove a entrega de uma publicação a um assinante. A preservação do payload no hook, isoladamente, não demonstra essa entrega.
+
+Esta lista descreve a cobertura encontrada no código, não uma execução realizada durante esta revisão. Reexecute `go test ./...` após alterações e consulte os resultados atuais da CI antes de afirmar que a suíte está passando.
 
 ## Validação Docker
 
@@ -62,6 +64,8 @@ Esse registro histórico não substitui uma nova execução depois de alteraçõ
 - O broker não implementa autenticação MQTT nem ACL. Os ensaios devem permanecer em rede local controlada.
 
 ## Próximos testes físicos
+
+A validação com múltiplos equipamentos fica **adiada até depois da conclusão do trabalho de software**, por disponibilidade limitada de rádios. Isso não impede concluir as correções, testes automatizados, documentação e verificações de build/CI que podem ser realizadas agora.
 
 - [x] Conectar um rádio físico ao broker por MQTT/TLS.
 - [x] Confirmar recebimento e processamento de mensagens.
