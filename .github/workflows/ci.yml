@@ -50,7 +50,16 @@ jobs:
         run: go test -race ./...
 
       - name: Verificar vulnerabilidades alcançáveis nas dependências Go
-        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+        shell: bash
+        run: |
+          set -euo pipefail
+          govulncheck_version="$(tr -d '[:space:]' < .github/govulncheck-version)"
+          if [[ ! "$govulncheck_version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Versão inválida em .github/govulncheck-version"
+            exit 1
+          fi
+          echo "Executando govulncheck ${govulncheck_version}"
+          go run "golang.org/x/vuln/cmd/govulncheck@${govulncheck_version}" ./...
 
       - name: Build
         run: go build ./cmd/broker
