@@ -47,7 +47,7 @@ Variáveis:
 - `MQTT_CERTIFICATE_FILE`: caminho do certificado TLS.
 - `MQTT_PRIVATE_KEY_FILE`: caminho da chave privada TLS.
 - `MESHTASTIC_DEFAULT_PSK`: PSK em hexadecimal (compatibilidade anterior) ou Base64 padrão; após decodificar, deve ter 16 ou 32 bytes.
-- `MESHTASTIC_ZERO_HOP`: `true` para definir `hop_limit=0) em envelopes protobuf válidos antes do encaminhamento; padrão `false`.
+- `MESHTASTIC_ZERO_HOP`: `true` para definir `hop_limit=0` em envelopes protobuf válidos antes do encaminhamento; padrão `false`.
 
 A PSK do canal Meshtastic é distinta das credenciais e do certificado usados por MQTT/TLS. Não grave uma PSK de implantação no repositório nem em logs.
 
