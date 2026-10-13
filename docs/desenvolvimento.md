@@ -32,7 +32,7 @@ Testes unitários, testes de integração MQTT, testes em Docker e ensaios com h
 6. Executar go test ./...
 7. Executar `go vet ./...`.
 8. Executar `go test -race ./...` para procurar condições de corrida.
-9. Executar `go run golang.org/x/vuln/cmd/govulncheck@latest ./...` e analisar vulnerabilidades conhecidas que afetem funções chamadas.
+9. Executar `go run "golang.org/x/vuln/cmd/govulncheck@$(tr -d '[:space:]' < .github/govulncheck-version)" ./...` e analisar vulnerabilidades conhecidas que afetem funções chamadas.
 10. Executar `go build ./cmd/broker`.
 11. Validar o contexto Docker, construir a imagem, executar o scanner de vulnerabilidades e testar a inicialização TLS.
 12. Rever o diff integral e o estado do Git; não incluir scripts ou artefatos locais sem aprovação.
