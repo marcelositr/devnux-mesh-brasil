@@ -67,7 +67,6 @@ func envOrDefault(name, fallback string) string {
 	return fallback
 }
 
-
 // boolEnvOrDefault converte uma variável de ambiente booleana ou usa o valor padrão.
 func boolEnvOrDefault(name string, fallback bool) (bool, error) {
 	value := os.Getenv(name)
