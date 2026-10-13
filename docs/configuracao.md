@@ -15,9 +15,15 @@ A PSK de ambiente deve ser uma string hexadecimal que resulte em 16 ou 32 bytes.
 
 ## Limites de entrada e conexões
 
-O projeto usa Mochi MQTT v2.7.9 e não substitui os limites padrão da biblioteca por valores próprios. Nessa versão, o padrão `MaximumPacketSize: 0` significa que não há limite máximo de pacote configurado, e `MaximumClients` começa sem um teto operacional útil para esta aplicação. Não há variáveis de ambiente do projeto para ajustar esses limites.
+O projeto usa Mochi MQTT v2.7.9 e não substitui os limites padrão da biblioteca por valores próprios. A documentação da versão indica:
 
-Por isso, mantenha o listener em uma rede controlada e não considere a configuração atual endurecida para clientes não confiáveis. A meta inicial de planejamento é uma rede de até 200 rádios, mas isso não é uma capacidade comprovada nem significa 200 conexões MQTT: rádios podem publicar por meio de gateways. Valores explícitos devem ser definidos após examinar a documentação da versão de Mochi MQTT utilizada e executar testes com um perfil de carga representativo; não escolher limites arbitrários que possam rejeitar tráfego Meshtastic legítimo.
+- `MaximumPacketSize: 0`: não impõe limite máximo de pacote MQTT.
+- `MaximumClients`: o valor padrão não constitui um teto operacional prático para esta implantação.
+- `MaximumClientWritesPending: 8192`: capacidade padrão da fila de escritas pendentes de cada cliente; o Mochi alerta que valores altos aumentam o consumo de memória conforme cresce o número de clientes.
+
+Referências: [API e opções do Mochi MQTT v2.7.9](https://pkg.go.dev/github.com/mochi-mqtt/server/v2@v2.7.9), seção *Server Options and Capabilities*. Não há variáveis de ambiente do projeto para ajustar esses limites.
+
+Mantenha o listener em uma rede controlada e não considere a configuração atual endurecida para clientes não confiáveis. A meta inicial de planejamento é uma rede de até 200 rádios, mas isso não é uma capacidade comprovada nem significa 200 conexões MQTT: rádios podem publicar por meio de gateways. O limite de pacote MQTT também não deve ser confundido com o limite de payload LoRa; o broker recebe um `ServiceEnvelope` protobuf encapsulado em MQTT. Antes de definir valores explícitos, registre tamanhos reais dos envelopes e frequência de publicação em um ensaio representativo, estabeleça a topologia de gateways e meça memória, CPU e latência sob carga. Não escolher limites arbitrários que possam rejeitar tráfego Meshtastic legítimo.
 
 ## TLS
 
