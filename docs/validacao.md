@@ -16,7 +16,7 @@ A cobertura presente nos testes do repositório inclui:
 - rejeição de payload MQTT vazio;
 - preservação do payload original no retorno do hook `OnPublish` nos cenários cobertos.
 
-**Limites da cobertura:** não existe um teste específico que comprove a rejeição de uma PSK incorreta. AES-CTR não autentica o conteúdo; uma chave errada pode produzir bytes que falham no parsing, mas não existe garantia criptográfica de detecção de chave incorreta. Foi adicionado um teste de integração que conecta dois clientes MQTT ao servidor TLS de teste e verifica se o assinante recebe o payload publicado; a execução desse teste e dos demais testes ainda precisa ser confirmada pela CI desta branch.
+**Limites da cobertura:** não existe um teste específico que comprove a rejeição de uma PSK incorreta. AES-CTR não autentica o conteúdo; uma chave errada pode produzir bytes que falham no parsing, mas não existe garantia criptográfica de detecção de chave incorreta. Foi adicionado um teste de integração que conecta dois clientes MQTT ao servidor TLS de teste e verifica se o assinante recebe o payload publicado. Na execução do commit `75b59f7`, a CI passou em `go test ./...`, `go vet ./...`, build Go, build Docker e teste de inicialização do container com validação TLS.
 
 Esta lista descreve a cobertura encontrada no código, não uma execução realizada durante esta revisão. Reexecute `go test ./...` após alterações e consulte os resultados atuais da CI antes de afirmar que a suíte está passando.
 
