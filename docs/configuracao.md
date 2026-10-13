@@ -156,6 +156,8 @@ A configuração atual aceita conexões e inscrições MQTT sem autenticação a
 
 Antes de uma implantação pública, os requisitos de autenticação, autorização, controle de abuso e observabilidade deverão ser definidos com base no comportamento observado em hardware Meshtastic físico e real.
 
+Não habilite downlink no canal LongFast com a PSK padrão através deste broker enquanto não existir uma política zero-hop testada. O broker atual encaminha publicações sem reescrever `hop_limit`; use uma PSK privada em canal de teste para validar a ponte física sem injetar tráfego irrestrito na malha pública.
+
 Não implemente essas camadas apenas com base em hipóteses. As possibilidades e os critérios de decisão estão em [Evolução futura e hardening](evolucao.md).
 
 ## Verificação
