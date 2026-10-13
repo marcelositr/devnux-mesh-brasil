@@ -125,6 +125,14 @@ Para investigar repetições, é necessário comparar identificadores e campos d
 
 A configuração MQTT do Meshtastic também define quais canais fazem uplink para o servidor e quais recebem downlink. Consulte a [documentação oficial do módulo MQTT](https://meshtastic.org/docs/configuration/module/mqtt/) para a semântica das opções do rádio.
 
+### Downlink físico e política zero-hop
+
+O firmware Meshtastic assina os tópicos protobuf dos canais com `downlink_enabled` e encaminha os envelopes compatíveis para a malha. A recepção depende de `channel_id` corresponder ao canal configurado no rádio, do envelope ser válido e dos filtros de downlink do firmware; uma publicação MQTT aceita pelo broker não garante, por si só, transmissão LoRa.
+
+O servidor MQTT público do Meshtastic aplica uma política de **zero-hop** para que o tráfego vindo da Internet alcance os nós diretamente conectados, sem se propagar indefinidamente pela malha local. Um broker privado não recebe essa proteção automaticamente. A chave padrão do LongFast é pública; a documentação oficial recomenda canais privados com PSKs próprias para brokers privados. Este projeto ainda não aplica nem impõe zero-hop. Portanto, não executar downlink no LongFast compartilhado até que essa política esteja definida e testada. Para ensaios isolados, preferir um canal de teste com PSK própria e pacotes de teste com `hop_limit = 0`.
+
+Para o firmware usado neste projeto, o caminho de downlink a validar primeiro é o protobuf `ServiceEnvelope`; não presumir que o tópico JSON de downlink documentado para versões compatíveis seja aceito por todo firmware. Referências: [MQTT Meshtastic](https://meshtastic.org/docs/software/integrations/mqtt/) e [configuração do módulo MQTT](https://meshtastic.org/docs/configuration/module/mqtt/).
+
 ## Compatibilidade e validação
 
 O núcleo criptográfico possui teste de interoperabilidade baseado em vetor conhecido. A validação automatizada deve ser executada antes de alterações no protocolo ou na criptografia.
