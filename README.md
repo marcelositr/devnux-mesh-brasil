@@ -62,6 +62,10 @@ Os caminhos padrão no container são /etc/devnux/certs/certificate.pem e /etc/d
     go run golang.org/x/vuln/cmd/govulncheck@latest ./...
     go build ./cmd/broker
 
+Fuzzing direcionado do parser protobuf (30 segundos):
+
+    go test ./internal/broker -fuzz=FuzzParseServiceEnvelope -fuzztime=30s -parallel=2
+
 A CI verifica formatação, testes, `vet`, detector de condições de corrida, vulnerabilidades Go alcançáveis, build Go, exclusões de segredos no contexto Docker, construção da imagem, vulnerabilidades críticas/altas conhecidas na imagem (ignorando as sem correção disponível) e inicialização TLS do container. As Actions de terceiros usadas nos workflows são fixadas por SHA completo. O resultado precisa ser confirmado na execução do commit candidato; a presença dos passos não significa, por si só, que passaram.
 
 Consulte [Guia de desenvolvimento](docs/desenvolvimento.md) e [Validação](docs/validacao.md) para distinguir cobertura existente de execuções efetivamente confirmadas.

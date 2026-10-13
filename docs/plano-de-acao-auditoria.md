@@ -3,7 +3,7 @@
 - **Projeto:** DevNux Mesh Brasil
 - **Branch de trabalho:** `work/finalizacao-projeto`
 - **Base da auditoria:** commit `a6f6672c54f83729872e9591b5863f480c0ad650`
-- **Estado:** Fase 1 concluída; verificações automatizáveis das Fases 2 e 3 passaram na CI/CodeQL; Fase 4 está na revisão final. A coleta de carga real e a validação física da Fase 5 continuam pendentes. Meta de planejamento: até 200 rádios, sem tratar isso como capacidade comprovada nem converter diretamente rádios em conexões MQTT.
+- **Estado:** Fase 1 concluída; as verificações automatizáveis das Fases 2 e 3 passaram na CI/CodeQL e o fuzzing direcionado passou. A Fase 4 está na revisão final. Carga real e validação física permanecem na Fase 5. Meta de planejamento: até 200 rádios, sem tratar isso como capacidade comprovada nem converter diretamente rádios em conexões MQTT.
 - **Processo:** trabalhar diretamente na branch de trabalho. Não abrir PRs novos nem fazer merge durante a execução. A integração com `main` será tratada somente no final.
 - **Regra de evidência:** não declarar testes executados sem resultado verificável. Separar testes automatizados, testes de container e validação física com hardware.
 
@@ -39,11 +39,7 @@ Finalizar o software com mudanças pequenas e rastreáveis, comportamento docume
 ### Fase 2 — Segurança e configuração
 
 - [x] Consultar a documentação oficial do Mochi MQTT v2.7.9: `MaximumPacketSize: 0` não limita o pacote MQTT; `MaximumClientWritesPending` tem padrão 8192 por cliente; `MaximumClients` não impõe um teto operacional útil. Registrado em `docs/configuracao.md`.
-- [ ] Definir limites de tamanho de pacote, clientes e recursos pendentes após medir envelopes reais, frequência de publicação e consumo sob carga para a meta de planejamento de até 200 rádios; não escolher valores arbitrários.
-- [ ] Definir o modelo de conexão da rede (rádios conectados diretamente ou por gateways), pois o número de rádios não equivale necessariamente ao número de clientes MQTT.
 - [x] Documentar a metodologia para coletar tráfego real e testar conexões, carga normal, pico observado, assinantes lentos e reconexões em `docs/perfil-de-carga.md`.
-- [ ] Coletar dados reais de tamanho/frequência dos envelopes e medir memória/CPU/latência antes de declarar capacidade suportada.
-- [ ] Se forem definidos limites, configurar e testar os limites no broker.
 - [x] Revisar `.dockerignore` para excluir arquivos `.env`, certificados, chaves e diretórios locais de segredos, preservando `.env.example`; o teste de regressão `scripts/test-dockerignore.sh` está integrado à CI e passou no commit candidato `fbcf066`.
 - [x] Documentar a recomendação de menor privilégio para a chave TLS montada: chave `0640` restrita a root/grupo dedicado, acesso do grupo no container e bind mount somente leitura.
 - [x] Confirmar CI do smoke test Docker com chave `0640` e grupo correspondente ao usuário `devnux` — sucesso na execução [38429481414](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38429481414).
@@ -78,6 +74,10 @@ Finalizar o software com mudanças pequenas e rastreáveis, comportamento docume
 
 ### Fase 5 — Validação física posterior
 
+- [ ] Definir limites de tamanho de pacote, clientes e recursos pendentes após medir envelopes reais, frequência de publicação e consumo sob carga para a meta de planejamento de até 200 rádios; não escolher valores arbitrários.
+- [ ] Definir o modelo de conexão da rede (rádios conectados diretamente ou por gateways), pois o número de rádios não equivale necessariamente ao número de clientes MQTT.
+- [ ] Coletar dados reais de tamanho/frequência dos envelopes e medir memória/CPU/latência antes de declarar capacidade suportada.
+- [ ] Se forem definidos limites, configurar e testar os limites no broker.
 - [ ] Repetir o ensaio com o Heltec Wi-Fi LoRa 32 V4 e registrar estabilidade, reconexões e resultados.
 - [ ] Quando houver segundo rádio, validar o fluxo multi-nó, incluindo uplink e downlink conforme o cenário suportado.
 - [ ] Investigar mensagens duplicadas com IDs, timestamps e campos dos pacotes; não implementar deduplicação sem evidência.
@@ -133,7 +133,7 @@ Atualizar esta seção a cada etapa concluída, com o SHA do commit e links dos 
 - **Decisão registrada:** planejar inicialmente para uma rede de até 200 rádios. Não definir limites de pacote/conexões até examinar a documentação da versão Mochi MQTT usada e estabelecer perfil de carga plausível.
 - **Progresso Fase 2:** teste de PSK incorreta adicionado com ressalva explícita de que AES-CTR não autentica conteúdo; restrição de rede controlada documentada; CI atual passou no teste de contexto Docker e no smoke test TLS com chave `0640`. Os defaults do Mochi MQTT v2.7.9 estão documentados; não foram introduzidos limites numéricos arbitrários.
 - **Progresso de dimensionamento:** a metodologia de teste de carga foi registrada em `docs/perfil-de-carga.md`; ainda faltam topologia final, captura de tráfego representativa e medições do host.
-- **Próximas ações:** habilitar/confirmar o reporte privado de vulnerabilidades nas configurações do GitHub; fazer a revisão final do PR #10 sem merge antecipado; usar dados do hardware e da implantação para preencher o perfil de carga e só então decidir limites. Não alterar a cifra Meshtastic.
+- **Próximas ações:** validar a geração de SBOM, concluir a revisão final do diff/PR #10 sem merge antecipado e habilitar/confirmar o reporte privado de vulnerabilidades nas configurações do GitHub. Perfil de carga e limites numéricos foram movidos para a Fase 5, pois dependem de tráfego real e medições. Não alterar a cifra Meshtastic.
 - **Alterações recentes no branch de trabalho:** teste de PSK incorreta (`5506bd3`); Dependabot para Go, GitHub Actions e Docker (`c50516a`); atualização de Go para 1.27.2 (`5e16f1d`, `cf026a6`); CI com race, govulncheck, Trivy e Actions pinadas (`b7db4e7`, `f4eeff7`, `5144f11`). A CI e o CodeQL passaram no candidato `fbcf066`; as mudanças documentais finais serão verificadas em nova execução.
 - **Validação física multi-nó:** pendente.
 - **Integração com `main`:** reservada para o final.

@@ -40,6 +40,8 @@ Testes unitários, testes de integração MQTT, testes em Docker e ensaios com h
 14. Se houver hardware, registrar modelo, firmware, configuração, procedimento, evidência e limitações em [Equipamentos e ensaios](equipamentos.md) e [Validação](validacao.md).
 15. Criar commit com mensagem objetiva.
 
+Para executar fuzzing direcionado do parser protobuf por 30 segundos, use `go test ./internal/broker -fuzz=FuzzParseServiceEnvelope -fuzztime=30s -parallel=2`. O workflow [Fuzz](../.github/workflows/fuzz.yml) executa esse ensaio automaticamente na branch de trabalho.
+
 ## Protocolo e criptografia
 
 Mudanças na criptografia ou no processador de pacotes exigem atenção especial. Preservar os testes de interoperabilidade e confirmar alterações no nonce, tamanho da chave, protobuf ou interpretação do pacote. Não presumir suporte a canais com PSKs diferentes sem teste explícito.

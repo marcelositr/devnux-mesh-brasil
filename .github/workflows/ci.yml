@@ -71,6 +71,23 @@ jobs:
           vuln-type: os,library
           severity: CRITICAL,HIGH
 
+      - name: Gerar SBOM CycloneDX da imagem Docker
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: devnux-mesh-brasil:test
+          format: cyclonedx
+          output: sbom.cdx.json
+          exit-code: '0'
+          vuln-type: os,library
+
+      - name: Publicar artefato SBOM
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: devnux-mesh-brasil-sbom-${{ github.sha }}
+          path: sbom.cdx.json
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Testar inicialização da imagem Docker com TLS
         shell: bash
         run: |

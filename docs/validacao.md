@@ -14,6 +14,7 @@ A cobertura presente nos testes do repositório inclui:
 - round-trip AES-CTR e vetor de interoperabilidade com a PSK padrão;
 - rejeição de chave AES com tamanho não suportado;
 - teste determinístico com PSK incorreta para um vetor conhecido, sem atribuir ao AES-CTR uma capacidade de autenticação que ele não possui;
+- fuzz target do parser `ServiceEnvelope`, executado por 30 segundos no workflow separado;
 - rejeição de payload MQTT vazio;
 - descarte pelo hook de `Data` com `portnum = 0` ou payload vazio;
 - aceitação pelo hook de portnum desconhecido quando o payload é válido;
@@ -21,7 +22,7 @@ A cobertura presente nos testes do repositório inclui:
 
 **Limites da cobertura:** o teste de PSK incorreta cobre apenas um vetor fixo e garante que a chave alternativa não recupera aquele `Data` conhecido. AES-CTR não autentica o conteúdo; uma chave errada pode produzir bytes que falham no parsing ou, em alguns casos, dados que ainda podem ser interpretados. Não existe garantia criptográfica de detecção de chave incorreta. O teste de integração conecta dois clientes MQTT ao servidor TLS de teste e verifica a entrega de uma publicação aceita, além de confirmar que uma publicação com `portnum = 0` não chega ao assinante.
 
-No commit `fbcf0668611fcda621f59dbde50caabbcd61c996`, a [CI](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38443657663) passou com `gofmt`, `go test ./...`, `go vet ./...`, `go test -race ./...`, `govulncheck` (nenhuma vulnerabilidade alcançável encontrada), build Go, teste de exclusões do contexto Docker, construção da imagem, Trivy e smoke test TLS. O [CodeQL](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38443657757) também passou. Esses resultados são do commit indicado; a validação física multi-nó continua pendente.
+No commit `d5d4e61c1b8c835d56e4e809c1e7680a7c670681`, a [CI](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38444795790) passou com `gofmt`, `go test ./...`, `go vet ./...`, `go test -race ./...`, `govulncheck` (nenhuma vulnerabilidade alcançável encontrada), build Go, teste de exclusões do contexto Docker, construção da imagem, Trivy e smoke test TLS. O [CodeQL](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38444802969) também passou. O workflow [Fuzz](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38444795981) passou após aproximadamente 869 mil execuções do parser em 30 segundos, sem falha. A geração de SBOM foi adicionada depois desse commit e está aguardando sua primeira execução. A validação física multi-nó continua pendente.
 
 ## Validação Docker
 

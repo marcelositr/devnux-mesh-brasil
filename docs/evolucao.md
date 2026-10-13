@@ -6,10 +6,10 @@ Registrar possibilidades de evolução sem transformar hipóteses em requisitos 
 
 ## Correções técnicas e verificações automatizadas
 
-No commit `fbcf0668611fcda621f59dbde50caabbcd61c996`, a CI passou em formatação, testes, `vet`, detector de condições de corrida, `govulncheck`, build Go, teste de contexto Docker, construção e scan da imagem, e smoke test TLS. O CodeQL também passou. Esses resultados verificam o software automatizado, não a malha física multi-nó:
+No commit `d5d4e61c1b8c835d56e4e809c1e7680a7c670681`, a CI passou em formatação, testes, `vet`, detector de condições de corrida, `govulncheck`, build Go, teste de contexto Docker, construção e scan da imagem, e smoke test TLS. O CodeQL também passou. O workflow de fuzzing direcionado completou aproximadamente 869 mil execuções sem falha. A geração de SBOM CycloneDX foi adicionada depois desse commit e ainda aguarda a primeira validação. Esses resultados verificam o software automatizado, não a malha física multi-nó:
 
 - **Toolchain Go:** o `govulncheck` inicial detectou seis vulnerabilidades alcançáveis na biblioteca padrão do Go 1.27.1, com correções disponíveis no Go 1.27.2. A toolchain e a imagem de build foram atualizadas para 1.27.2; a execução final do `govulncheck` não encontrou vulnerabilidades alcançáveis.
-- **Cadeia de suprimentos:** as Actions de terceiros nos workflows CI, CodeQL e Docker estão fixadas por SHA completo e o Dependabot verifica atualizações mensais de módulos Go, GitHub Actions e imagens Docker.
+- **Cadeia de suprimentos:** as Actions de terceiros nos workflows CI, CodeQL, Docker e Fuzz estão fixadas por SHA completo; o Dependabot verifica atualizações mensais de módulos Go, GitHub Actions e imagens Docker. A CI agora gera um artefato SBOM CycloneDX da imagem.
 - **Ciclo de vida do servidor:** `Serve` agora é chamado de forma síncrona e seu erro é tratado antes de o processo aguardar sinais de encerramento.
 - **Logs de mensagens:** o conteúdo textual deixou de ser registrado; o log mantém tópico, cliente, portnum e tamanho do payload. Foi adicionado teste para impedir regressão dessa exposição.
 - **Integração MQTT:** foi adicionado teste com dois clientes MQTT sobre TLS, um publicando e outro assinando, para verificar a entrega do payload original.
