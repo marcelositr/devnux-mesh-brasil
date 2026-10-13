@@ -14,9 +14,11 @@ A cobertura presente nos testes do repositório inclui:
 - round-trip AES-CTR e vetor de interoperabilidade com a PSK padrão;
 - rejeição de chave AES com tamanho não suportado;
 - rejeição de payload MQTT vazio;
+- descarte pelo hook de `Data` com `portnum = 0` ou payload vazio;
+- aceitação pelo hook de portnum desconhecido quando o payload é válido;
 - preservação do payload original no retorno do hook `OnPublish` nos cenários cobertos.
 
-**Limites da cobertura:** não existe um teste específico que comprove a rejeição de uma PSK incorreta. AES-CTR não autentica o conteúdo; uma chave errada pode produzir bytes que falham no parsing, mas não existe garantia criptográfica de detecção de chave incorreta. Foi adicionado um teste de integração que conecta dois clientes MQTT ao servidor TLS de teste e verifica se o assinante recebe o payload publicado. Na execução do commit `75b59f7`, a CI passou em `go test ./...`, `go vet ./...`, build Go, build Docker e teste de inicialização do container com validação TLS.
+**Limites da cobertura:** não existe um teste específico que comprove a rejeição de uma PSK incorreta. AES-CTR não autentica o conteúdo; uma chave errada pode produzir bytes que falham no parsing, mas não existe garantia criptográfica de detecção de chave incorreta. Há um teste de integração que conecta dois clientes MQTT ao servidor TLS de teste e verifica a entrega de uma publicação aceita. O teste também verifica que uma publicação com `portnum = 0` não chega ao assinante; a execução após essa alteração deve ser confirmada na CI. Na execução do commit `75b59f7`, a CI passou em `go test ./...`, `go vet ./...`, build Go, build Docker e teste de inicialização do container com validação TLS.
 
 Esta lista descreve a cobertura encontrada no código, não uma execução realizada durante esta revisão. Reexecute `go test ./...` após alterações e consulte os resultados atuais da CI antes de afirmar que a suíte está passando.
 
