@@ -133,3 +133,69 @@ func TestOnPublishBlocksEnvelopeWhenDecryptionCannotDecodeData(t *testing.T) {
 		t.Fatalf("OnPublish() alterou payload")
 	}
 }
+
+func TestOnPublishIgnoresDataWithoutUsefulPayload(t *testing.T) {
+	tests := []struct {
+		name string
+		data *meshtastic.Data
+	}{
+		{
+			name: "zero portnum",
+			data: &meshtastic.Data{Portnum: 0, Payload: []byte("non-empty")},
+		},
+		{
+			name: "empty payload",
+			data: &meshtastic.Data{Portnum: 1},
+		},
+		{
+			name: "zero portnum and empty payload",
+			data: &meshtastic.Data{Portnum: 0},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler := testHandler()
+			client := &mqtt.Client{ID: "test-client"}
+			payload, err := proto.Marshal(testEnvelope(t, tt.data))
+			if err != nil {
+				t.Fatalf("proto.Marshal() retornou erro: %v", err)
+			}
+
+			got, result := handler.OnPublish(client, packets.Packet{
+				TopicName: "msh/test",
+				Payload:   payload,
+			})
+			if result != packets.CodeSuccessIgnore {
+				t.Fatalf("OnPublish() = %v, esperado ignorar publicação (%v)", result, packets.CodeSuccessIgnore)
+			}
+			if !bytes.Equal(got.Payload, payload) {
+				t.Fatal("OnPublish() alterou o payload original")
+			}
+		})
+	}
+}
+
+func TestOnPublishAcceptsUnknownPortnumWithPayload(t *testing.T) {
+	handler := testHandler()
+	client := &mqtt.Client{ID: "test-client"}
+	envelope := testEnvelope(t, &meshtastic.Data{
+		Portnum: meshtastic.PortNum(999),
+		Payload: []byte("valid unknown portnum payload"),
+	})
+	payload, err := proto.Marshal(envelope)
+	if err != nil {
+		t.Fatalf("proto.Marshal() retornou erro: %v", err)
+	}
+
+	got, result := handler.OnPublish(client, packets.Packet{
+		TopicName: "msh/test",
+		Payload:   payload,
+	})
+	if result != nil {
+		t.Fatalf("OnPublish() deveria aceitar portnum desconhecido com payload: %v", result)
+	}
+	if !bytes.Equal(got.Payload, payload) {
+		t.Fatal("OnPublish() alterou o payload original")
+	}
+}
