@@ -52,7 +52,7 @@ A mesma transformação AES-CTR é usada para criptografar e descriptografar dad
 
 O resultado é interpretado como `meshtastic.Data`.
 
-O fluxo atual consegue registrar mensagens de texto e outros portnums conforme os dados presentes. Pacotes que não produzam os dados necessários para um registro textual não devem ser confundidos com falhas do broker.
+O fluxo registra mensagens de texto e outros portnums quando o `Data` contém payload. Portnums desconhecidos não são descartados apenas por serem desconhecidos, desde que o payload seja válido. `Data` com `portnum = 0` ou payload vazio é ignorado pelo hook e não é encaminhado aos assinantes MQTT. Falhas de parsing, validação ou descriptografia também são ignoradas.
 
 ## MQTT, hops e repetições
 
