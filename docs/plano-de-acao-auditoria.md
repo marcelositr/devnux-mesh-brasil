@@ -140,3 +140,12 @@ Atualizar esta seção a cada etapa concluída, com o SHA do commit e links dos 
 - **Validação física multi-nó:** pendente.
 - **PR #10:** revisado; não foi feito merge. A integração fica pendente de autorização explícita.
 - **Reporte privado de vulnerabilidades:** ainda requer ativação manual em [Settings → Security](https://github.com/marcelositr/devnux-mesh-brasil/settings/security_analysis).
+
+## Atualização — 13/10/2026: correções incrementais iniciadas
+
+As alterações abaixo foram aplicadas diretamente em `work/finalizacao-projeto`. A validação automatizada do estado final destas alterações ainda está pendente; não considerar os itens validados até que os workflows concluam.
+
+- [x] **Gate de tags Docker:** o workflow `.github/workflows/docker.yml` agora verifica, para tags `v*`, se o commit marcado é ancestral do histórico atual de `main`. O job de publicação depende explicitamente de CI, CodeQL e desta verificação. Isso impede a publicação por uma tag que aponte para um commit ainda não integrado em `main`; não substitui controles de permissão e proteção de tags no GitHub.
+- [x] **Versão fixada do govulncheck:** a versão foi movida para `.github/govulncheck-version` (atualmente `v1.1.4`, versão indicada pela release oficial mais recente consultada) e a CI valida o formato antes de executar a ferramenta. Atualizações futuras devem alterar esse arquivo deliberadamente e passar pela CI.
+- [ ] **Validação pós-alteração:** confirmar CI, CodeQL e Fuzz no SHA final da branch e revisar os resultados antes de considerar estas correções concluídas.
+- **Integração/publicação:** nenhum merge em `main` nem publicação de imagem foi executado.
