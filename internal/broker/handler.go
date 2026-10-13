@@ -4,6 +4,8 @@ import (
 	"log/slog"
 	"strings"
 
+	"google.golang.org/protobuf/proto"
+
 	mqtt "github.com/mochi-mqtt/server/v2"
 	"github.com/mochi-mqtt/server/v2/packets"
 
@@ -17,6 +19,7 @@ type Handler struct {
 	mqtt.HookBase
 	logger    *slog.Logger
 	processor packetProcessor
+	zeroHop   bool
 }
 
 // NewHandler cria o hook responsável pelo ciclo de vida das mensagens MQTT.
@@ -24,6 +27,7 @@ func NewHandler(logger *slog.Logger, cfg config.Config) *Handler {
 	return &Handler{
 		logger:    logger,
 		processor: newPacketProcessor(cfg.DefaultPSK),
+		zeroHop:   cfg.ZeroHop,
 	}
 }
 
@@ -77,6 +81,20 @@ func (h *Handler) OnPublish(client *mqtt.Client, packet packets.Packet) (packets
 	if err != nil {
 		h.logger.Warn("falha ao inspecionar ServiceEnvelope; publicação preservada", "topic", packet.TopicName, "client_id", client.ID)
 		return packet, nil
+	}
+
+	// O broker público do Meshtastic limita a zero os saltos restantes dos
+	// pacotes que reencaminha. Isso evita que downlink MQTT se propague pela
+	// malha local. Preservamos hop_start para manter a informação original.
+	if h.zeroHop && envelope.GetPacket() != nil && envelope.GetPacket().GetHopLimit() != 0 {
+		envelope.GetPacket().HopLimit = 0
+		rewritten, marshalErr := proto.Marshal(envelope)
+		if marshalErr != nil {
+			h.logger.Warn("não foi possível aplicar zero-hop; publicação original preservada", "topic", packet.TopicName, "client_id", client.ID, "erro", marshalErr)
+			return packet, nil
+		}
+		packet.Payload = rewritten
+		h.logger.Debug("política zero-hop aplicada", "topic", packet.TopicName, "client_id", client.ID, "hop_start", envelope.GetPacket().GetHopStart())
 	}
 
 	if envelope.GetPacket() != nil && envelope.GetPacket().GetDecoded() != nil {
