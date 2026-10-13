@@ -92,7 +92,7 @@ A documentação disponível registra testes automatizados, um teste Docker e um
 - compatibilidade com todos os tipos de payload ou portnums;
 - suporte transparente a canais com PSKs diferentes;
 - autenticação de clientes MQTT ou autorização por tópico;
-- política zero-hop para conter a propagação de downlink vindo do MQTT;
+- validação em hardware real da política zero-hop implementada no broker;
 - prontidão para exposição pública.
 
 Autenticação MQTT, ACL, rate limiting, deduplicação, persistência, moderação e observabilidade avançada continuam sendo possibilidades futuras, não funcionalidades já implementadas. Consulte [Evolução futura e hardening](evolucao.md).
