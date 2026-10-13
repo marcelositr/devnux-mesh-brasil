@@ -47,8 +47,8 @@ Finalizar o software com mudanças pequenas e rastreáveis, comportamento docume
 - [x] Revisar `.dockerignore` para excluir arquivos `.env`, certificados, chaves e diretórios locais de segredos, preservando `.env.example`; o teste de regressão `scripts/test-dockerignore.sh` foi adicionado à CI. A execução da CI ainda precisa ser confirmada.
 - [x] Documentar a recomendação de menor privilégio para a chave TLS montada: chave `0640` restrita a root/grupo dedicado, acesso do grupo no container e bind mount somente leitura.
 - [x] Confirmar CI do smoke test Docker com chave `0640` e grupo correspondente ao usuário `devnux` — sucesso na execução [38429481414](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38429481414).
-- [ ] Manter explícita a restrição a redes confiáveis enquanto não houver autenticação MQTT e ACL.
-- [ ] Testar casos de PSK incorreta e payloads inválidos, documentando o que AES-CTR permite ou não detectar.
+- [x] Manter explícita a restrição a redes confiáveis enquanto não houver autenticação MQTT e ACL; consta no README, configuração, desenvolvimento e SECURITY.md.
+- [ ] Testar casos de PSK incorreta e payloads inválidos, documentando o que AES-CTR permite ou não detectar. Teste determinístico de PSK incorreta adicionado em `internal/broker/packet_processor_test.go`; aguardando CI no commit candidato para marcar concluído.
 - [ ] Não alterar a criptografia do protocolo Meshtastic sem requisito e evidência de interoperabilidade.
 
 **Critério de saída:** limites e riscos operacionais explícitos; proteções implementadas têm testes correspondentes.
@@ -57,9 +57,11 @@ Finalizar o software com mudanças pequenas e rastreáveis, comportamento docume
 
 - [ ] Revisar o workflow Docker para que a publicação dependa da aprovação das verificações de qualidade.
 - [ ] Aplicar o critério às publicações de `latest`, tags de versão e execuções manuais.
-- [ ] Verificar vulnerabilidades conhecidas nas dependências Go e nas imagens base.
-- [ ] Avaliar a versão da toolchain Go e planejar atualização somente com regressão completa.
-- [ ] Executar formatação, testes, vet, build Go, CI, CodeQL e smoke test Docker no commit candidato a release.
+- [ ] Verificar vulnerabilidades conhecidas nas dependências Go e nas imagens base. Os passos `govulncheck` e Trivy foram adicionados à CI; resultado ainda pendente.
+- [ ] Avaliar a versão da toolchain Go e planejar atualização somente com regressão completa. `go.mod` e a imagem de build foram atualizados para Go 1.27.1; regressão completa ainda pendente.
+- [ ] Fixar as Actions de terceiros por SHA completo; aplicado aos workflows CI, CodeQL e Docker, aguardando validação dos workflows.
+- [ ] Habilitar/confirmar o reporte privado de vulnerabilidades nas configurações do repositório; a automação disponível não tem permissão para alterar esta configuração.
+- [ ] Executar formatação, testes, race, govulncheck, vet, build Go, CI, CodeQL, scan e smoke test Docker no commit candidato a release.
 - [ ] Revisar o diff integral da branch para confirmar que somente alterações previstas foram incluídas.
 
 **Critério de saída:** commit candidato identificado; CI e CodeQL verdes nesse SHA; imagem construída e testada; publicação condicionada às verificações.
@@ -120,7 +122,7 @@ O trabalho de auditoria, testes automatizados e correções não deve ser confun
 
 Atualizar esta seção a cada etapa concluída, com o SHA do commit e links dos resultados:
 
-- **Fase atual:** Fase 2 — segurança e configuração. Meta de planejamento acordada: até 200 rádios; não equivale a garantia de capacidade. Fase 1 concluída e validada; documentação de resultados atualizada em commits posteriores.
+- **Fase atual:** Fases 2 e 3 — hardening automatizado e validação da nova toolchain. Meta de planejamento: até 200 rádios, sem garantia de capacidade. Fase 5 física multi-rádio permanece explicitamente posterior.
 - **SHA inicial da auditoria:** `a6f6672c54f83729872e9591b5863f480c0ad650`.
 - **SHA com testes de regressão antes da implementação:** `8fd8aa9d823693243d29ffb100adfbcc5cc901e1` — CI falhou como esperado em `TestOnPublishIgnoresDataWithoutUsefulPayload`, confirmando o defeito.
 - **SHA candidato validado:** `11af5e650ca84c615d2d884bc05dfa7b1d8e5c38`.
@@ -132,5 +134,6 @@ Atualizar esta seção a cada etapa concluída, com o SHA do commit e links dos 
 - **Progresso Fase 2:** `.dockerignore` atualizado e teste de regressão integrado à CI; o teste de contexto Docker e o smoke test TLS com chave `0640` passaram na [CI 38429481414](https://github.com/marcelositr/devnux-mesh-brasil/actions/runs/38429481414). O CodeQL estava em andamento na última consulta. Os defaults da biblioteca Mochi MQTT v2.7.9 foram documentados, sem introduzir limites numéricos arbitrários.
 - **Progresso de dimensionamento:** a metodologia de teste de carga foi registrada em `docs/perfil-de-carga.md`; ainda faltam topologia final, captura de tráfego representativa e medições do host.
 - **Próxima ação:** confirmar CI/CodeQL das atualizações documentais; depois, usar dados do hardware e da implantação para preencher o perfil. Só então decidir limites. Não alterar a cifra Meshtastic.
+- **Alterações recentes no branch de trabalho:** teste de PSK incorreta (`5506bd3`); Dependabot para Go, GitHub Actions e Docker (`c50516a`); atualização de Go para 1.27.1 (`66d7592`, `7fe7216`); CI com race, govulncheck, Trivy e Actions pinadas (`b7db4e7`, `f4eeff7`, `5144f11`). Os workflows correspondentes ainda precisam terminar com sucesso no commit candidato final.
 - **Validação física multi-nó:** pendente.
 - **Integração com `main`:** reservada para o final.

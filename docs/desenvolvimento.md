@@ -30,12 +30,15 @@ Testes unitários, testes de integração MQTT, testes em Docker e ensaios com h
 4. Atualizar ou adicionar testes quando o comportamento exigir.
 5. Executar gofmt.
 6. Executar go test ./...
-7. Executar go vet ./...
-8. Executar go build ./cmd/broker.
-9. Rever git diff e git status.
-10. Atualizar documentos que descrevem o comportamento alterado.
-11. Se houver hardware, registrar modelo, firmware, configuração, procedimento, evidência e limitações em [Equipamentos e ensaios](equipamentos.md) e [Validação](validacao.md).
-12. Criar commit com mensagem objetiva.
+7. Executar `go vet ./...`.
+8. Executar `go test -race ./...` para procurar condições de corrida.
+9. Executar `go run golang.org/x/vuln/cmd/govulncheck@latest ./...` e analisar vulnerabilidades conhecidas que afetem funções chamadas.
+10. Executar `go build ./cmd/broker`.
+11. Validar o contexto Docker, construir a imagem, executar o scanner de vulnerabilidades e testar a inicialização TLS.
+12. Rever o diff integral e o estado do Git; não incluir scripts ou artefatos locais sem aprovação.
+13. Atualizar documentos que descrevem o comportamento alterado.
+14. Se houver hardware, registrar modelo, firmware, configuração, procedimento, evidência e limitações em [Equipamentos e ensaios](equipamentos.md) e [Validação](validacao.md).
+15. Criar commit com mensagem objetiva.
 
 ## Protocolo e criptografia
 
@@ -51,4 +54,4 @@ Uma nova dependência precisa de necessidade concreta e licença compatível. Ev
 
 ## Critério de pronto
 
-Uma mudança está pronta quando o comportamento esperado está implementado, os testes relevantes foram executados, vet e build foram verificados, a documentação foi atualizada, o diff não contém alterações acidentais e os testes físicos aplicáveis foram realizados ou explicitamente marcados como pendentes.
+Uma mudança está pronta quando o comportamento esperado está implementado, testes, `vet`, `race`, verificação de vulnerabilidades e build foram verificados, a CI e o CodeQL do commit candidato estão verdes, a imagem Docker e seu scan foram verificados, a documentação está atualizada e o diff não contém alterações acidentais. Os testes físicos aplicáveis devem ser realizados ou explicitamente marcados como pendentes.
