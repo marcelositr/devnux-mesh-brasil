@@ -9,7 +9,8 @@ O broker utiliza:
 | `MQTT_LISTEN_ADDRESS` | `:8883` | endereço do listener MQTT |
 | `MQTT_CERTIFICATE_FILE` | `certificate.pem` | certificado TLS |
 | `MQTT_PRIVATE_KEY_FILE` | `private.key` | chave privada TLS |
-| `MESHTASTIC_DEFAULT_PSK` | PSK padrão do projeto | chave para descriptografia |
+| `MESHTASTIC_DEFAULT_PSK` | PSK padrão do projeto | chave para inspeção opcional |
+| `MQTT_ZERO_HOP` | `true` | define `hop_limit = 0` em envelopes protobuf reconhecidos |
 
 A PSK de ambiente deve ser uma string hexadecimal que resulte em 16 ou 32 bytes.
 
@@ -156,7 +157,7 @@ A configuração atual aceita conexões e inscrições MQTT sem autenticação a
 
 Antes de uma implantação pública, os requisitos de autenticação, autorização, controle de abuso e observabilidade deverão ser definidos com base no comportamento observado em hardware Meshtastic físico e real.
 
-Não habilite downlink no canal LongFast com a PSK padrão através deste broker enquanto não existir uma política zero-hop testada. O broker atual encaminha publicações sem reescrever `hop_limit`; use uma PSK privada em canal de teste para validar a ponte física sem injetar tráfego irrestrito na malha pública.
+A variável `MQTT_ZERO_HOP` controla a política de saltos restantes e assume `true` por padrão. Nesse modo, o broker define `MeshPacket.hop_limit = 0` em envelopes protobuf reconhecidos nos tópicos de malha, preservando `hop_start`, para limitar a propagação de downlink. Mantenha essa opção habilitada no LongFast compartilhado. Defina `MQTT_ZERO_HOP=false` somente para uma malha privada e isolada onde multi-hop via MQTT seja intencional. Para ensaios físicos, ainda prefira uma PSK privada em canal de teste; zero-hop não substitui autenticação MQTT ou ACL.
 
 Não implemente essas camadas apenas com base em hipóteses. As possibilidades e os critérios de decisão estão em [Evolução futura e hardening](evolucao.md).
 
