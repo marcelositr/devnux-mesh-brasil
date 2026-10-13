@@ -50,7 +50,11 @@ jobs:
         run: go test -race ./...
 
       - name: Fuzz direcionado do parser ServiceEnvelope
-        run: go test ./internal/broker -run='^
+        run: go test ./internal/broker -fuzz=FuzzParseServiceEnvelope -fuzztime=5s -parallel=2
+
+      - name: Verificar vulnerabilidades alcançáveis nas dependências Go
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
       - name: Build
         run: go build ./cmd/broker
 
